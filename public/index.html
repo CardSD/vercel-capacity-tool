@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Capacity & Stakeholder Tool</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="./ical.min.js"></script>
+</head>
+<body>
+
+<!-- ===== AUTH SCREEN ===== -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="sidebar-logo-icon" style="width:48px;height:48px;font-size:22px;border-radius:13px;">⚡</div>
+    </div>
+    <h2 class="auth-title">Capacity Tool</h2>
+
+    <!-- Auth tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Connexion</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Inscription</button>
+    </div>
+
+    <!-- Login form -->
+    <div class="auth-form" id="loginForm">
+      <input type="email" class="form-input auth-input" id="loginEmail" placeholder="Email" autocomplete="email">
+      <input type="password" class="form-input auth-input" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password">
+      <button class="btn btn-primary auth-btn" id="loginBtn" onclick="doLogin()">Se connecter</button>
+      <p class="auth-error" id="loginError" style="display:none;"></p>
+    </div>
+
+    <!-- Register form -->
+    <div class="auth-form" id="registerForm" style="display:none;">
+      <input type="text" class="form-input auth-input" id="regName" placeholder="Nom complet" autocomplete="name">
+      <input type="text" class="form-input auth-input" id="regRole" placeholder="Rôle (ex: Product Designer)">
+      <input type="email" class="form-input auth-input" id="regEmail" placeholder="Email" autocomplete="email">
+      <input type="password" class="form-input auth-input" id="regPassword" placeholder="Mot de passe (min. 6 caractères)" autocomplete="new-password">
+      <input type="password" class="form-input auth-input" id="regPasswordConfirm" placeholder="Confirmer le mot de passe" autocomplete="new-password">
+      <button class="btn btn-primary auth-btn" id="registerBtn" onclick="doRegister()">Créer mon compte</button>
+      <p class="auth-error" id="registerError" style="display:none;"></p>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="appContainer" style="display:none;">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">⚡</div>
+        <div class="sidebar-logo-text">
+          Capacity Tool<br>
+          <small>Multi-Produit</small>
+        </div>
+      </div>
+      <div class="workspace-selector" id="workspaceSelector" style="display:none;">
+        <select class="form-input" id="workspaceSelect" onchange="switchWorkspace(this.value)"></select>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Navigation</div>
+      <div class="nav-item active" data-section="capacity" onclick="switchSection('capacity')">
+        <span class="nav-item-icon">📊</span>
+        <span>Planification capacité</span>
+      </div>
+      <div class="nav-item" data-section="ics-import" onclick="switchSection('ics-import')">
+        <span class="nav-item-icon">📅</span>
+        <span>Import ICS</span>
+      </div>
+      <div class="nav-item" data-section="stakeholders" onclick="switchSection('stakeholders')">
+        <span class="nav-item-icon">👥</span>
+        <span>Carte des parties prenantes</span>
+      </div>
+      <div class="nav-item" data-section="timesheet" onclick="switchSection('timesheet')">
+        <span class="nav-item-icon">⏱️</span>
+        <span>Timesheet</span>
+      </div>
+      <div class="nav-section-label">Système</div>
+      <div class="nav-item" data-section="mapping-rules" onclick="switchSection('mapping-rules')">
+        <span class="nav-item-icon">🔧</span>
+        <span>Règles de mapping</span>
+      </div>
+      <div class="nav-item" data-section="settings" onclick="switchSection('settings')">
+        <span class="nav-item-icon">⚙️</span>
+        <span>Paramètres</span>
+      </div>
+      <div class="nav-item" onclick="exportAllData()">
+        <span class="nav-item-icon">📥</span>
+        <span>Exporter JSON</span>
+      </div>
+      <label class="nav-item" for="importFile" style="cursor:pointer">
+        <span class="nav-item-icon">📤</span>
+        <span>Importer JSON</span>
+      </label>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importAllData(event)">
+    </nav>
+    <div class="sidebar-footer">
+      <!-- R10.4: Search button -->
+      <button class="btn btn-ghost btn-sm" onclick="openSearchModal()" title="Recherche globale (Ctrl+K)" style="width:100%;margin-bottom:8px;display:flex;align-items:center;gap:8px;justify-content:center;">
+        <span>🔍</span> <span>Rechercher…</span> <kbd style="font-size:10px;opacity:0.5;">Ctrl+K</kbd>
+      </button>
+      <div class="sidebar-footer-info">
+        <div class="avatar" id="sidebarAvatar">DC</div>
+        <div>
+          <div class="sidebar-footer-name" id="sidebarFooterName">David Cardoso</div>
+          <div class="sidebar-footer-role" id="sidebarFooterRole">Senior Product Designer</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()" title="Déconnexion" style="margin-left:auto;padding:4px 8px;flex-shrink:0;">🚪</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main-content">
+
+    <!-- =========================================
+         SECTION: CAPACITY PLANNING
+         ========================================= -->
+    <div id="section-capacity" class="section active">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Planification de capacité</h1>
+          <p class="page-subtitle">Gestion du temps par produit et par activité — Vue multi-projets</p>
+        </div>
+        <div class="header-actions">
+          <!-- R2.1: Timeline navigation arrows -->
+          <button class="btn btn-ghost btn-sm" onclick="shiftTimeline(-1)" title="Semaines précédentes">◄</button>
+          <button class="btn btn-ghost btn-sm" onclick="shiftTimeline(1)" title="Semaines suivantes">►</button>
+          <div class="tab-group" id="donutScopeToggleSmall">
+            <button class="tab-btn active" data-scope="week" onclick="setDonutScope('week')">Cette semaine</button>
+            <button class="tab-btn" data-scope="cycle" onclick="setDonutScope('cycle')">Ce cycle</button>
+            <button class="tab-btn" data-scope="all" onclick="setDonutScope('all')">Tout</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- R3.1: KPI Bar -->
+      <div class="kpi-bar" id="kpiBar"></div>
+
+      <!-- Top row: Timeline + Donut -->
+      <div class="capacity-top">
+        <!-- Timeline Card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Répartition hebdomadaire</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="text-sm text-muted" id="timelineRange"></span>
+              <!-- R1.4: Capacity view toggle -->
+              <div class="tab-group" style="margin-left:8px;">
+                <button class="tab-btn active" id="viewToggleGraphique" onclick="setCapacityView('graphique')">Graphique</button>
+                <button class="tab-btn" id="viewToggleTableau" onclick="setCapacityView('tableau')">Tableau</button>
+              </div>
+            </div>
+          </div>
+          <div id="capacityGraphiqueView">
+            <div class="timeline-scroll">
+              <div class="timeline-grid" id="timelineGrid">
+                <!-- Dynamically filled -->
+              </div>
+            </div>
+          </div>
+          <div id="capacityTableView" style="display:none;">
+            <div class="capacity-table-wrap">
+              <table class="capacity-table" id="capacityTable">
+                <!-- Dynamically filled -->
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- Donut Card -->
+        <div class="card donut-card">
+          <div class="card-header">
+            <span class="card-title">Répartition du temps</span>
+          </div>
+          <!-- Donut Mode Toggle: Par produit / Par activité -->
+          <div class="donut-toggle" id="donutModeToggle">
+            <button class="donut-toggle-btn active" data-mode="product" onclick="setDonutMode('product')">Par produit</button>
+            <button class="donut-toggle-btn" data-mode="activity" onclick="setDonutMode('activity')">Par activité</button>
+          </div>
+          <div class="donut-wrapper">
+            <canvas id="donutChart"></canvas>
+            <div class="donut-center-label">
+              <div class="donut-center-hours" id="donutCenterHours">0h</div>
+              <div class="donut-center-text" id="donutCenterText">total</div>
+            </div>
+          </div>
+          <div class="donut-legend" id="donutLegend">
+            <!-- Dynamically filled -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Cycle Overview -->
+      <div class="cycle-overview">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Vue par cycle Discovery</span>
+            <span class="text-sm text-muted">Cycles de 4 semaines • Sprints de 2 semaines</span>
+          </div>
+          <div class="cycles-grid" id="cyclesGrid">
+            <!-- Dynamically filled -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================
+         SECTION: ICS IMPORT
+         ========================================= -->
+    <div id="section-ics-import" class="section">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Import Calendrier ICS</h1>
+          <p class="page-subtitle">Glissez un fichier .ics exporté depuis Outlook ou tout autre calendrier</p>
+        </div>
+        <div class="header-actions">
+          <div class="llm-toggle-wrap">
+            <label class="llm-toggle-label" for="llmToggle">
+              <span class="llm-toggle-icon">🤖</span>
+              <span>Assistance LLM</span>
+            </label>
+            <button class="toggle-switch" id="llmToggle" role="switch" aria-checked="false" onclick="toggleLLM()">
+              <span class="toggle-knob"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LLM Config Panel (hidden by default) -->
+      <div class="llm-config-panel" id="llmConfigPanel" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🤖 Configuration LLM</span>
+            <span class="llm-status-badge" id="llmStatusBadge">Déconnecté</span>
+          </div>
+          <div class="llm-config-body">
+            <div class="form-group">
+              <label class="form-label">Fournisseur</label>
+              <select class="form-input" id="llmProvider" onchange="updateLLMProvider()">
+                <option value="openai">OpenAI (GPT-4o-mini)</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="custom">URL personnalisée</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Clé API</label>
+              <div class="api-key-input-wrap">
+                <input type="password" class="form-input" id="llmApiKey" placeholder="sk-...">
+                <button class="btn btn-ghost btn-sm" onclick="testLLMConnection()" id="llmTestBtn">Tester</button>
+              </div>
+            </div>
+            <div class="form-group" id="llmCustomUrlGroup" style="display:none;">
+              <label class="form-label">URL endpoint</label>
+              <input type="text" class="form-input" id="llmCustomUrl" placeholder="https://api.example.com/v1/chat/completions">
+            </div>
+            <p class="llm-config-note">La clé API peut être configurée ici (sauvegardée dans le navigateur) ou dans les variables d’environnement Vercel (recommandé pour la sécurité).</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drop Zone -->
+      <label class="ics-drop-zone" id="icsDropZone" for="icsFileInput">
+        <div class="drop-zone-content">
+          <div class="drop-zone-icon">📅</div>
+          <div class="drop-zone-title">Importer un calendrier .ics</div>
+          <div class="drop-zone-subtitle">Compatible Outlook (Mac/Windows), Google Calendar, Apple Calendar</div>
+          <div style="margin-top:16px;display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;">
+            <span class="btn btn-primary" style="pointer-events:none;">Parcourir...</span>
+            <span style="opacity:0.5;font-size:13px;">ou glissez-déposez ici</span>
+          </div>
+        </div>
+        <input type="file" id="icsFileInput" accept=".ics,.ical,.ifb,.icalendar,text/calendar,application/ics" style="display:none">
+      </label>
+
+      <!-- Paste ICS content (always visible) -->
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header">
+          <span class="card-title">📋 Coller le contenu ICS</span>
+        </div>
+        <div style="padding:16px;">
+          <p style="margin:0 0 12px;opacity:0.6;font-size:13px;line-height:1.5;">Si le sélecteur de fichier ne fonctionne pas : ouvrez votre fichier .ics avec un éditeur de texte (Bloc-notes, TextEdit), copiez tout le contenu et collez-le ci-dessous.</p>
+          <textarea id="icsPasteArea" class="form-input" rows="6" placeholder="Collez ici le contenu de votre fichier .ics&#10;(BEGIN:VCALENDAR...END:VCALENDAR)" style="font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="processICSPaste()">📥 Importer le contenu collé</button>
+        </div>
+      </div>
+
+      <!-- Import Results -->
+      <div id="icsResults" style="display:none;">
+        <!-- Summary Stats -->
+        <div class="ics-summary" id="icsSummary">
+          <!-- Filled dynamically -->
+        </div>
+
+        <!-- Tabs: Auto-classés / À trier -->
+        <div class="ics-tabs">
+          <div class="tab-group">
+            <button class="tab-btn active" data-icstab="auto" onclick="switchICSTab('auto')">
+              ✅ Auto-classés <span class="ics-tab-count" id="autoCount">0</span>
+            </button>
+            <button class="tab-btn" data-icstab="manual" onclick="switchICSTab('manual')">
+              ⚠️ À trier <span class="ics-tab-count" id="manualCount">0</span>
+            </button>
+            <button class="tab-btn" data-icstab="ignored" onclick="switchICSTab('ignored')">
+              🚫 Ignorés <span class="ics-tab-count" id="ignoredCount">0</span>
+            </button>
+          </div>
+          <div class="ics-actions-bar">
+            <button class="btn btn-ghost btn-sm" id="llmClassifyBtn" style="display:none;" onclick="classifyWithLLM()">🤖 Classer avec LLM</button>
+            <button class="btn btn-primary btn-sm" onclick="applyICSImport()">Appliquer à la planification</button>
+          </div>
+        </div>
+
+        <!-- Auto-classified events -->
+        <div class="ics-event-list" id="icsAutoList">
+          <!-- Filled dynamically -->
+        </div>
+
+        <!-- Manual triage events -->
+        <div class="ics-event-list" id="icsManualList" style="display:none;">
+          <!-- Filled dynamically -->
+        </div>
+
+        <!-- Ignored events -->
+        <div class="ics-event-list" id="icsIgnoredList" style="display:none;">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================
+         SECTION: MAPPING RULES
+         ========================================= -->
+    <div id="section-mapping-rules" class="section">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Règles de mapping</h1>
+          <p class="page-subtitle">Système de classification automatique en 3 couches</p>
+        </div>
+      </div>
+
+      <!-- Live Test Field -->
+      <div class="card mb-20" style="border-left:3px solid var(--primary);">
+        <div style="padding:16px;">
+          <label class="form-label" style="margin-bottom:8px;display:block;">🔍 Tester un titre d'événement</label>
+          <input type="text" class="form-input" id="mappingTestInput" placeholder="Ex: [SWD] Design — Refonte page d'accueil" oninput="liveTestMapping()" autocomplete="off" style="font-family:monospace;font-size:13px;">
+          <div id="mappingTestResult" style="margin-top:10px;display:none;"></div>
+        </div>
+      </div>
+
+      <!-- Layer 1: Naming Convention -->
+      <div class="card mb-20 mapping-layer" id="mappingLayer1">
+        <div class="card-header mapping-layer-header" onclick="toggleMappingLayer(1)" style="cursor:pointer;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="mapping-layer-chevron" id="mappingChevron1">▾</span>
+            <div>
+              <span class="card-title">Couche 1 — Convention de nommage</span>
+              <p class="text-sm text-muted mt-4" id="mappingLayerSummary1">Format attendu : <code class="code-inline">[PRODUIT] Type — Description</code></p>
+            </div>
+          </div>
+          <span class="layer-badge layer-1">Priorité haute</span>
+        </div>
+        <div class="naming-guide mapping-layer-body" id="mappingBody1">
+          <div class="naming-guide-section">
+            <h4 class="naming-guide-title">Préfixes produit reconnus</h4>
+            <div class="naming-tags" id="namingProductTags">
+              <!-- Filled dynamically from state.products -->
+            </div>
+          </div>
+          <div class="naming-guide-section">
+            <h4 class="naming-guide-title">Mots-clés d'activité reconnus</h4>
+            <div class="naming-tags" id="namingActivityTags">
+              <!-- Filled dynamically from state.categories -->
+            </div>
+          </div>
+          <div class="naming-guide-section">
+            <h4 class="naming-guide-title">Exemples valides</h4>
+            <div class="naming-examples">
+              <div class="naming-example"><code class="code-inline">[SWD] Design — Refonte page d'accueil</code><span class="example-result">→ SWD / Design</span></div>
+              <div class="naming-example"><code class="code-inline">[EC] Discovery — Tests utilisateurs</code><span class="example-result">→ Espace Client / Recherche</span></div>
+              <div class="naming-example"><code class="code-inline">[DS] DesignOps — Tokens update</code><span class="example-result">→ Design System / DesignOps</span></div>
+              <div class="naming-example"><code class="code-inline">[APP] Réunion — Sprint review</code><span class="example-result">→ App Mobile / Réunions</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 2: Keyword Rules -->
+      <div class="card mb-20 mapping-layer" id="mappingLayer2">
+        <div class="card-header mapping-layer-header" onclick="toggleMappingLayer(2)" style="cursor:pointer;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="mapping-layer-chevron" id="mappingChevron2">▸</span>
+            <div>
+              <span class="card-title">Couche 2 — Règles par mots-clés</span>
+              <p class="text-sm text-muted mt-4" id="mappingLayerSummary2">Si la couche 1 ne correspond pas, ces règles sont appliquées sur le titre</p>
+            </div>
+          </div>
+          <span class="layer-badge layer-2">Priorité moyenne</span>
+        </div>
+        <div class="mapping-layer-body" id="mappingBody2" style="display:none;">
+        <div class="keyword-rules-list" id="keywordRulesList">
+          <!-- Filled dynamically -->
+        </div>
+        <button class="btn btn-ghost btn-sm mt-12" onclick="addKeywordRule()">+ Ajouter une règle</button>
+        </div>
+      </div>
+
+      <!-- Layer 3: Fallback -->
+      <div class="card mapping-layer" id="mappingLayer3">
+        <div class="card-header mapping-layer-header" onclick="toggleMappingLayer(3)" style="cursor:pointer;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="mapping-layer-chevron" id="mappingChevron3">▸</span>
+            <div>
+              <span class="card-title">Couche 3 — Triage manuel / LLM</span>
+              <p class="text-sm text-muted mt-4">Les événements non classés arrivent dans le panier « À trier »</p>
+            </div>
+          </div>
+          <span class="layer-badge layer-3">Fallback</span>
+        </div>
+        <div class="layer3-info mapping-layer-body" id="mappingBody3" style="display:none;">
+          <div class="layer3-option">
+            <div class="layer3-option-icon">👆</div>
+            <div>
+              <div class="layer3-option-title">Triage manuel</div>
+              <div class="layer3-option-desc">Assignez produit et activité manuellement pour chaque événement non classé</div>
+            </div>
+          </div>
+          <div class="layer3-option">
+            <div class="layer3-option-icon">🤖</div>
+            <div>
+              <div class="layer3-option-title">Assistance LLM (optionnel)</div>
+              <div class="layer3-option-desc">Activez le LLM dans l'import ICS pour classifier automatiquement les événements ambigus</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================
+         SECTION: STAKEHOLDERS
+         ========================================= -->
+    <div id="section-stakeholders" class="section">
+      <!-- Project bar -->
+      <div class="project-bar">
+        <input type="text" class="project-name-input" id="projectNameInput" value="SWD — Site Corporate" onchange="state.projectName = this.value">
+        <button class="btn btn-ghost btn-sm" onclick="loadSWDTemplate()">Charger template SWD</button>
+        <button class="btn btn-ghost btn-sm" onclick="newProject()">Nouveau projet</button>
+        <button class="btn btn-primary btn-sm" onclick="openStakeholderModal()">+ Ajouter</button>
+      </div>
+
+      <!-- Sub-tabs -->
+      <div class="stakeholder-views">
+        <div class="tab-group">
+          <button class="tab-btn active" data-view="matrix" onclick="switchStakeholderView('matrix')">Matrice Pouvoir/Intérêt</button>
+          <button class="tab-btn" data-view="table" onclick="switchStakeholderView('table')">Liste</button>
+          <button class="tab-btn" data-view="network" onclick="switchStakeholderView('network')">Relations</button>
+        </div>
+      </div>
+
+      <!-- Matrix View -->
+      <div id="view-matrix" class="stakeholder-view active">
+        <div class="card">
+          <div style="position:relative; padding: 10px 0 10px 30px;">
+            <div class="matrix-axis-label matrix-axis-y">Pouvoir →</div>
+            <div class="matrix-container" id="matrixContainer">
+              <div class="matrix-grid">
+                <div class="matrix-quadrant q-satisfy">
+                  <span class="quadrant-label">Satisfaire</span>
+                  <span class="text-sm" style="opacity:0.6">Pouvoir élevé / Intérêt faible</span>
+                </div>
+                <div class="matrix-quadrant q-manage">
+                  <span class="quadrant-label">Gérer de près</span>
+                  <span class="text-sm" style="opacity:0.6">Pouvoir élevé / Intérêt élevé</span>
+                </div>
+                <div class="matrix-quadrant q-monitor">
+                  <span class="quadrant-label">Surveiller</span>
+                  <span class="text-sm" style="opacity:0.6">Pouvoir faible / Intérêt faible</span>
+                </div>
+                <div class="matrix-quadrant q-inform">
+                  <span class="quadrant-label">Informer</span>
+                  <span class="text-sm" style="opacity:0.6">Pouvoir faible / Intérêt élevé</span>
+                </div>
+              </div>
+              <!-- Stakeholder nodes rendered here -->
+              <div class="matrix-area" id="matrixArea"></div>
+            </div>
+            <div class="matrix-axis-label matrix-axis-x">Intérêt →</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table View -->
+      <div id="view-table" class="stakeholder-view" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Toutes les parties prenantes</span>
+            <button class="btn btn-primary btn-sm" onclick="openStakeholderModal()">+ Ajouter</button>
+          </div>
+          <div class="stakeholder-table-wrap">
+            <table class="stakeholder-table">
+              <thead>
+                <tr>
+                  <th onclick="sortStakeholders('name')">Nom</th>
+                  <th onclick="sortStakeholders('role')">Rôle / Équipe</th>
+                  <th onclick="sortStakeholders('power')">Pouvoir</th>
+                  <th onclick="sortStakeholders('interest')">Intérêt</th>
+                  <th onclick="sortStakeholders('influence')">Type d'influence</th>
+                  <th onclick="sortStakeholders('frequency')">Fréquence</th>
+                  <th onclick="sortStakeholders('contactHours')">Contact réel</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="stakeholderTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network View -->
+      <div id="view-network" class="stakeholder-view" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Vue des relations</span>
+          </div>
+          <div class="relationship-canvas-wrap" id="networkContainer">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================
+         SECTION: TIMESHEET
+         ========================================= -->
+    <div id="section-timesheet" class="section">
+      <!-- Active Timer Bar (shown when timer is running) -->
+      <div class="timer-bar" id="timerBar" style="display:none;">
+        <div class="timer-bar-left">
+          <span class="timer-bar-pulse" id="timerBarPulse"></span>
+          <div class="timer-bar-info">
+            <span class="timer-bar-name" id="timerBarName">—</span>
+            <span class="timer-bar-badges" id="timerBarBadges"></span>
+          </div>
+        </div>
+        <div class="timer-bar-center">
+          <span class="timer-bar-elapsed" id="timerBarElapsed">00:00:00</span>
+        </div>
+        <div class="timer-bar-right">
+          <button class="btn btn-ghost btn-sm" onclick="pauseTimer()" title="Pause">⏸ Pause</button>
+          <button class="btn btn-danger btn-sm" onclick="stopTimer()" title="Stop">⏹ Terminer</button>
+        </div>
+      </div>
+
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Timesheet</h1>
+          <p class="page-subtitle">Saisie manuelle du temps — Complément à l’import ICS</p>
+        </div>
+        <div class="header-actions">
+          <div class="tab-group" id="timesheetViewToggle">
+            <button class="tab-btn active" data-tsview="today" onclick="switchTimesheetView('today')">Aujourd’hui</button>
+            <button class="tab-btn" data-tsview="week" onclick="switchTimesheetView('week')">Cette semaine</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Add Form -->
+      <div class="card mb-20" id="timesheetAddCard">
+        <div class="card-header">
+          <span class="card-title">➕ Ajouter une entrée</span>
+        </div>
+        <div class="timesheet-form">
+          <div class="timesheet-form-row">
+            <div class="form-group ts-form-name">
+              <label class="form-label">Tâche</label>
+              <input type="text" class="form-input" id="tsName" placeholder="Ex: Maquettes homepage v2">
+            </div>
+            <div class="form-group ts-form-date">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-input" id="tsDate">
+            </div>
+          </div>
+          <div class="timesheet-form-row">
+            <div class="form-group">
+              <label class="form-label">Produit</label>
+              <select class="form-input" id="tsProduct" onchange="onTimesheetProductChange()"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Catégorie</label>
+              <select class="form-input" id="tsCategory"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Partie prenante <span style="opacity:0.5;font-weight:400;">(optionnel)</span></label>
+              <select class="form-input" id="tsStakeholder" onchange="onTimesheetStakeholderChange()"></select>
+            </div>
+          </div>
+          <div class="timesheet-form-row timesheet-form-footer">
+            <div class="form-group ts-duration-group">
+              <label class="form-label">Durée (HH:MM)</label>
+              <input type="text" class="form-input ts-duration-input" id="tsDuration" placeholder="01:30">
+            </div>
+            <button class="btn btn-ghost ts-timer-btn" id="tsStartTimerBtn" onclick="startTimerForNew()">▶ Démarrer le timer</button>
+            <div class="form-group ts-notes-group">
+              <label class="form-label">Notes <span style="opacity:0.5;font-weight:400;">(optionnel)</span></label>
+              <input type="text" class="form-input" id="tsNotes" placeholder="">
+            </div>
+            <button class="btn btn-primary ts-add-btn" onclick="addTimesheetEntry()">Ajouter</button>
+          </div>
+          <!-- R7.3: Repeat last + R7.4: Recent tasks -->
+          <div style="padding:8px 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="repeatLastEntry()" title="Copier la dernière entrée dans le formulaire">🔁 Répéter la dernière</button>
+            <div class="recent-tasks-list" id="recentTasksList" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Entries -->
+      <div id="timesheetTodayView">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" id="timesheetDayTitle">Aujourd’hui</span>
+            <span class="ts-total-badge" id="timesheetDayTotal">0h</span>
+          </div>
+          <div id="timesheetTodayList">
+            <div class="empty-state">
+              <div class="empty-state-icon">⏱️</div>
+              <div class="empty-state-text">Aucune entrée pour aujourd’hui</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly View -->
+      <div id="timesheetWeekView" style="display:none;">
+        <div id="timesheetWeekList"></div>
+      </div>
+    </div>
+
+    <!-- =========================================
+         SECTION: SETTINGS
+         ========================================= -->
+    <div id="section-settings" class="section">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Paramètres</h1>
+          <p class="page-subtitle">Configuration de l'outil</p>
+        </div>
+      </div>
+      <div class="settings-grid">
+        <!-- R9.3: Profile Settings -->
+        <div class="card">
+          <div class="card-title mb-16">Profil</div>
+          <div class="settings-item">
+            <span class="settings-item-label">Nom affiché</span>
+            <input type="text" class="settings-item-input" id="settingsDisplayName" placeholder="Votre nom" style="width:180px;">
+          </div>
+          <div class="settings-item">
+            <span class="settings-item-label">Rôle</span>
+            <input type="text" class="settings-item-input" id="settingsDisplayRole" placeholder="Ex: UX Designer" style="width:180px;">
+          </div>
+          <button class="btn btn-primary btn-sm mt-12" onclick="saveProfileSettings()">Enregistrer le profil</button>
+        </div>
+
+        <!-- Team Management -->
+        <div class="card">
+          <div class="card-title mb-16">👥 Équipe</div>
+          <div id="teamMembersList">
+            <!-- Dynamically filled -->
+          </div>
+          <div class="settings-item" style="margin-top:12px;">
+            <input type="email" class="form-input" id="inviteEmail" placeholder="email@exemple.com" style="flex:1;">
+            <select class="form-input" id="inviteRole" style="width:120px;">
+              <option value="editor">Éditeur</option>
+              <option value="viewer">Lecteur</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="inviteTeamMember()">Inviter</button>
+          </div>
+          <p class="settings-note" style="margin-top:8px;font-size:11px;opacity:0.5;">Carnet de contacts local. Les membres ajoutés ici sont sauvegardés dans votre espace de travail.</p>
+        </div>
+        <div class="card">
+          <div class="card-title mb-16">Capacité</div>
+          <div class="settings-item">
+            <span class="settings-item-label">Heures par semaine</span>
+            <input type="number" class="settings-item-input" id="settingsCapacity" value="40" min="1" max="80" onchange="updateCapacity(this.value)">
+          </div>
+          <div class="settings-item">
+            <span class="settings-item-label">Durée du cycle (semaines)</span>
+            <input type="number" class="settings-item-input" id="settingsCycleLength" value="4" min="1" max="12" onchange="updateCycleLength(this.value)">
+          </div>
+          <!-- R2.1: Cycle anchor date -->
+          <div class="settings-item">
+            <span class="settings-item-label">Date début cycle <span style="font-size:11px;opacity:0.5;">(optionnel)</span></span>
+            <input type="date" class="settings-item-input" id="settingsCycleStartDate" onchange="updateCycleStartDate(this.value)" style="width:160px;">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title mb-16">Produits / Projets</div>
+          <div class="product-list-setting" id="productSettings">
+            <!-- Dynamically filled -->
+          </div>
+          <button class="btn btn-ghost btn-sm mt-12" onclick="addProduct()">+ Ajouter un produit</button>
+        </div>
+        <div class="card">
+          <div class="card-title mb-16">Catégories d'activité</div>
+          <div class="category-list-setting" id="categorySettings">
+            <!-- Dynamically filled -->
+          </div>
+          <button class="btn btn-ghost btn-sm mt-12" onclick="addCategory()">+ Ajouter une catégorie</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ===== SLIDE PANEL: Week Editor ===== -->
+<div class="slide-panel-overlay" id="weekPanelOverlay" onclick="closeWeekPanel()"></div>
+<div class="slide-panel" id="weekPanel">
+  <div class="panel-header">
+    <h3 class="panel-title" id="weekPanelTitle">Semaine 1</h3>
+    <button class="panel-close" onclick="closeWeekPanel()">✕</button>
+  </div>
+  <div class="panel-body" id="weekPanelBody">
+    <!-- Dynamically filled -->
+  </div>
+  <div class="panel-footer">
+    <div class="panel-footer-left">
+      <button class="btn btn-ghost btn-sm" onclick="openCopyWeekModal()" title="Copier cette semaine vers d'autres semaines">📋 Copier vers…</button>
+      <button class="btn btn-ghost btn-sm" onclick="openSaveTemplateModal()" title="Sauvegarder comme modèle">💾 Modèle</button>
+    </div>
+    <div class="panel-footer-right">
+      <button class="btn btn-ghost" onclick="closeWeekPanel()">Annuler</button>
+      <button class="btn btn-ghost" onclick="saveAndNextWeek()" title="Enregistrer et aller à la semaine suivante">✓ + Suivante</button>
+      <button class="btn btn-primary" onclick="saveWeekData()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Stakeholder Editor ===== -->
+<div class="modal-overlay" id="stakeholderModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="stakeholderModalTitle">Ajouter une partie prenante</h3>
+      <button class="panel-close" onclick="closeStakeholderModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nom</label>
+        <input type="text" class="form-input" id="shName" placeholder="Nom complet ou équipe">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rôle / Équipe</label>
+        <input type="text" class="form-input" id="shRole" placeholder="Ex: Product Lead">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Pouvoir (1-10)</label>
+          <input type="number" class="form-input" id="shPower" min="1" max="10" value="5">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Intérêt (1-10)</label>
+          <input type="number" class="form-input" id="shInterest" min="1" max="10" value="5">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Type d'influence</label>
+          <select class="form-input" id="shInfluence">
+            <option value="decision">Décideur</option>
+            <option value="influencer">Influenceur</option>
+            <option value="contributor">Contributeur</option>
+            <option value="informed">Informé</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fréquence de contact</label>
+          <select class="form-input" id="shFrequency">
+            <option value="daily">Quotidien</option>
+            <option value="weekly">Hebdomadaire</option>
+            <option value="biweekly">Bi-mensuel</option>
+            <option value="monthly">Mensuel</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Produit par défaut</label>
+        <select class="form-input" id="shDefaultProduct">
+          <option value="">(Aucun)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-input" id="shNotes" placeholder="Notes supplémentaires..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeStakeholderModal()">Annuler</button>
+      <button class="btn btn-primary" id="stakeholderSaveBtn" onclick="saveStakeholder()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Generic (Copy Week, Template) ===== -->
+<div class="modal-overlay" id="genericModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="genericModalTitle">Action</h3>
+      <button class="panel-close" onclick="closeGenericModal()">✕</button>
+    </div>
+    <div class="modal-body" id="genericModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeGenericModal()">Annuler</button>
+      <button class="btn btn-primary" id="genericModalOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Global Search (Ctrl+K) ===== -->
+<div class="modal-overlay search-modal" id="searchModal" onclick="closeSearchModal()">
+  <div class="search-modal-inner" onclick="event.stopPropagation()">
+    <div class="search-modal-header">
+      <span class="search-modal-icon">🔍</span>
+      <input type="text" class="search-modal-input" id="searchInput" placeholder="Rechercher stakeholders, produits, semaines..." oninput="onSearchInput(this.value)" autocomplete="off">
+      <kbd class="search-kbd">ESC</kbd>
+    </div>
+    <div class="search-results" id="searchResults">
+      <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">Tapez pour rechercher…</div>
+    </div>
+    <div class="search-modal-footer">
+      <span style="font-size:11px;color:var(--text-muted);">Ctrl+K pour ouvrir • ↑↓ pour naviguer • Entrée pour sélectionner</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Stakeholder Detail ===== -->
+<div class="modal-overlay" id="stakeholderDetailModal" onclick="closeStakeholderDetailModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title" id="sdName">Nom</h3>
+        <p style="margin:2px 0 0;font-size:13px;color:var(--text-muted);" id="sdRole">Rôle</p>
+      </div>
+      <button class="panel-close" onclick="closeStakeholderDetailModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div class="sd-info-row"><span class="sd-label">Influence</span><span id="sdInfluence"></span></div>
+        <div class="sd-info-row"><span class="sd-label">Fréquence</span><span id="sdFreq"></span></div>
+        <div class="sd-info-row"><span class="sd-label">Pouvoir</span><strong id="sdPower"></strong></div>
+        <div class="sd-info-row"><span class="sd-label">Intérêt</span><strong id="sdInterest"></strong></div>
+        <div class="sd-info-row"><span class="sd-label">Contact réel</span><span id="sdContact"></span></div>
+        <div class="sd-info-row"><span class="sd-label">Produit</span><span id="sdProduct"></span></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="sd-label" style="margin-bottom:6px;">Notes</div>
+        <p style="font-size:13px;color:var(--text-secondary);" id="sdNotes"></p>
+      </div>
+      <div>
+        <div class="sd-label" style="margin-bottom:6px;">Contact par produit (timesheet)</div>
+        <div id="sdBreakdown" style="font-size:13px;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeStakeholderDetailModal()">Fermer</button>
+      <button class="btn btn-primary" id="sdEditBtn">Modifier</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ===== SAVE INDICATOR ===== -->
+<div class="save-indicator" id="saveIndicator"></div>
+
+<script src="./app.js"></script>
+</body>
+</html>

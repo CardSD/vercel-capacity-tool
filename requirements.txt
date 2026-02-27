@@ -1,0 +1,2 @@
+# No external dependencies — using stdlib only
+# Vercel Python runtime includes the stdlib (json, os, urllib, etc.)
