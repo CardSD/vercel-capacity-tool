@@ -20,7 +20,7 @@
     "url": "https://github.com/CardSD/vercel-capacity-tool/issues"
   },
   "homepage": "https://github.com/CardSD/vercel-capacity-tool#readme",
-  "dependencies": {
+  "devDependencies": {
     "vercel": "^50.25.2"
   }
 }
