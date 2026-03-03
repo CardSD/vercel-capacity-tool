@@ -1,0 +1,116 @@
+/* Theme: Swiss Minimal */
+/* International Typographic Style - Clean, precise, high contrast */
+/* Light theme with sharp angles and red accent */
+
+/* Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* --- Color Tokens --- */
+  --bg: #FAFAFA;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F5F5F5;
+  --bg-elevated: #FFFFFF;
+  --border: #E0E0E0;
+  --border-light: #BDBDBD;
+  --text: #111111;
+  --text-secondary: #555555;
+  --text-muted: #888888;
+
+  /* Brand - Swiss red */
+  --primary: #E53935;
+  --primary-light: #EF5350;
+  --primary-dim: rgba(229, 57, 53, 0.08);
+
+  /* Semantic */
+  --success: #2E7D32;
+  --success-dim: rgba(46, 125, 50, 0.08);
+  --warning: #F57F17;
+  --warning-dim: rgba(245, 127, 23, 0.08);
+  --danger: #C62828;
+  --danger-dim: rgba(198, 40, 40, 0.08);
+  --teal-light: #00796B;
+  --teal-light-dim: rgba(0, 121, 107, 0.08);
+  --purple-light: #5E35B1;
+  --purple-light-dim: rgba(94, 53, 177, 0.08);
+  --grey: #888888;
+  --grey-dim: rgba(136, 136, 136, 0.08);
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --radius: 0px;
+  --radius-sm: 0px;
+  --radius-lg: 0px;
+  --shadow: none;
+  --shadow-lg: none;
+  --transition: 0.1s ease;
+  --transition-slow: 0.2s ease;
+
+  /* --- Typography --- */
+  --font-body: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-heading: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --base-font-size: 15px;
+  --heading-size: 28px;
+  --heading-weight: 800;
+  --heading-letter-spacing: -0.03em;
+  --body-size: 14px;
+  --label-size: 10px;
+  --label-weight: 700;
+  --label-letter-spacing: 0.1em;
+  --label-transform: uppercase;
+
+  /* --- Buttons --- */
+  --btn-padding-y: 10px;
+  --btn-padding-x: 20px;
+  --btn-font-size: 13px;
+  --btn-font-weight: 600;
+  --btn-border-width: 2px;
+  --btn-radius: 0px;
+  --btn-sm-padding-y: 6px;
+  --btn-sm-padding-x: 12px;
+  --btn-sm-font-size: 12px;
+
+  /* --- Cards --- */
+  --card-padding: 24px;
+  --card-gap: 20px;
+  --card-border-width: 1px;
+  --card-radius: 0px;
+
+  /* --- Inputs --- */
+  --input-padding-y: 10px;
+  --input-padding-x: 12px;
+  --input-font-size: 14px;
+  --input-border-width: 2px;
+  --input-radius: 0px;
+
+  /* --- Navigation --- */
+  --nav-item-padding-y: 10px;
+  --nav-item-padding-x: 14px;
+  --nav-item-gap: 8px;
+  --nav-item-radius: 0px;
+  --nav-item-font-size: 13px;
+
+  /* --- Panels/Modals --- */
+  --panel-padding: 24px;
+  --panel-radius: 0px;
+  --modal-padding: 32px;
+  --modal-radius: 0px;
+
+  /* --- Sections --- */
+  --section-padding-y: 32px;
+  --section-padding-x: 40px;
+  --section-gap: 24px;
+
+  /* --- Scrollbar --- */
+  --scrollbar-width: 4px;
+  --scrollbar-color: #CCCCCC;
+
+  /* --- Hover --- */
+  --hover-bg: rgba(0, 0, 0, 0.03);
+  --hover-transform: none;
+
+  /* --- Focus --- */
+  --focus-ring-width: 2px;
+  --focus-ring-color: #E53935;
+  --focus-ring-offset: 2px;
+}

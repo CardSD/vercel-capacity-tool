@@ -4,11 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Capacity & Stakeholder Tool</title>
+  <link id="theme-css" rel="stylesheet" href="./themes/theme-current.css">
   <link rel="stylesheet" href="./style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="./ical.min.js"></script>
 </head>
 <body>
+<a class="skip-link" href="#mainContent">Aller au contenu principal</a>
 
 <!-- ===== AUTH SCREEN ===== -->
 <div class="auth-screen" id="authScreen">
@@ -26,19 +28,19 @@
 
     <!-- Login form -->
     <div class="auth-form" id="loginForm">
-      <input type="email" class="form-input auth-input" id="loginEmail" placeholder="Email" autocomplete="email">
-      <input type="password" class="form-input auth-input" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password">
+      <input type="email" class="form-input auth-input" id="loginEmail" placeholder="Email" autocomplete="email" aria-label="Adresse email">
+      <input type="password" class="form-input auth-input" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password" aria-label="Mot de passe">
       <button class="btn btn-primary auth-btn" id="loginBtn" onclick="doLogin()">Se connecter</button>
       <p class="auth-error" id="loginError" style="display:none;"></p>
     </div>
 
     <!-- Register form -->
     <div class="auth-form" id="registerForm" style="display:none;">
-      <input type="text" class="form-input auth-input" id="regName" placeholder="Nom complet" autocomplete="name">
-      <input type="text" class="form-input auth-input" id="regRole" placeholder="Rôle (ex: Product Designer)">
-      <input type="email" class="form-input auth-input" id="regEmail" placeholder="Email" autocomplete="email">
-      <input type="password" class="form-input auth-input" id="regPassword" placeholder="Mot de passe (min. 6 caractères)" autocomplete="new-password">
-      <input type="password" class="form-input auth-input" id="regPasswordConfirm" placeholder="Confirmer le mot de passe" autocomplete="new-password">
+      <input type="text" class="form-input auth-input" id="regName" placeholder="Nom complet" autocomplete="name" aria-label="Nom complet">
+      <input type="text" class="form-input auth-input" id="regRole" placeholder="Rôle (ex: Product Designer)" aria-label="Rôle">
+      <input type="email" class="form-input auth-input" id="regEmail" placeholder="Email" autocomplete="email" aria-label="Adresse email">
+      <input type="password" class="form-input auth-input" id="regPassword" placeholder="Mot de passe (min. 6 caractères)" autocomplete="new-password" aria-label="Mot de passe">
+      <input type="password" class="form-input auth-input" id="regPasswordConfirm" placeholder="Confirmer le mot de passe" autocomplete="new-password" aria-label="Confirmer le mot de passe">
       <button class="btn btn-primary auth-btn" id="registerBtn" onclick="doRegister()">Créer mon compte</button>
       <p class="auth-error" id="registerError" style="display:none;"></p>
     </div>
@@ -61,39 +63,39 @@
         <select class="form-input" id="workspaceSelect" onchange="switchWorkspace(this.value)"></select>
       </div>
     </div>
-    <nav class="sidebar-nav">
+    <nav class="sidebar-nav" aria-label="Navigation principale">
       <div class="nav-section-label">Navigation</div>
-      <div class="nav-item active" data-section="capacity" onclick="switchSection('capacity')">
-        <span class="nav-item-icon">📊</span>
+      <div class="nav-item active" data-section="capacity" onclick="switchSection('capacity')" tabindex="0" role="button">
+        <span class="nav-item-icon" aria-hidden="true"></span>
         <span>Planification capacité</span>
       </div>
-      <div class="nav-item" data-section="ics-import" onclick="switchSection('ics-import')">
-        <span class="nav-item-icon">📅</span>
+      <div class="nav-item" data-section="ics-import" onclick="switchSection('ics-import')" tabindex="0" role="button">
+        <span class="nav-item-icon" aria-hidden="true"></span>
         <span>Import ICS</span>
       </div>
-      <div class="nav-item" data-section="stakeholders" onclick="switchSection('stakeholders')">
-        <span class="nav-item-icon">👥</span>
+      <div class="nav-item" data-section="stakeholders" onclick="switchSection('stakeholders')" tabindex="0" role="button">
+        <span class="nav-item-icon" aria-hidden="true"></span>
         <span>Carte des parties prenantes</span>
       </div>
-      <div class="nav-item" data-section="timesheet" onclick="switchSection('timesheet')">
-        <span class="nav-item-icon">⏱️</span>
+      <div class="nav-item" data-section="timesheet" onclick="switchSection('timesheet')" tabindex="0" role="button">
+        <span class="nav-item-icon" aria-hidden="true"></span>
         <span>Timesheet</span>
       </div>
       <div class="nav-section-label">Système</div>
-      <div class="nav-item" data-section="mapping-rules" onclick="switchSection('mapping-rules')">
-        <span class="nav-item-icon">🔧</span>
+      <div class="nav-item" data-section="mapping-rules" onclick="switchSection('mapping-rules')" tabindex="0" role="button">
+        <span class="nav-item-icon" aria-hidden="true"></span>
         <span>Règles de mapping</span>
       </div>
-      <div class="nav-item" data-section="settings" onclick="switchSection('settings')">
-        <span class="nav-item-icon">⚙️</span>
+      <div class="nav-item" data-section="settings" onclick="switchSection('settings')" tabindex="0" role="button">
+        <span class="nav-item-icon" aria-hidden="true"></span>
         <span>Paramètres</span>
       </div>
-      <div class="nav-item" onclick="exportAllData()">
-        <span class="nav-item-icon">📥</span>
+      <div class="nav-item" onclick="exportAllData()" tabindex="0" role="button">
+        <span class="nav-item-icon" aria-hidden="true"></span>
         <span>Exporter JSON</span>
       </div>
-      <label class="nav-item" for="importFile" style="cursor:pointer">
-        <span class="nav-item-icon">📤</span>
+      <label class="nav-item" for="importFile" style="cursor:pointer" tabindex="0" role="button">
+        <span class="nav-item-icon" aria-hidden="true"></span>
         <span>Importer JSON</span>
       </label>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importAllData(event)">
@@ -101,7 +103,7 @@
     <div class="sidebar-footer">
       <!-- R10.4: Search button -->
       <button class="btn btn-ghost btn-sm" onclick="openSearchModal()" title="Recherche globale (Ctrl+K)" style="width:100%;margin-bottom:8px;display:flex;align-items:center;gap:8px;justify-content:center;">
-        <span>🔍</span> <span>Rechercher…</span> <kbd style="font-size:10px;opacity:0.5;">Ctrl+K</kbd>
+        <span aria-hidden="true"></span> <span>Rechercher…</span> <kbd style="font-size:10px;opacity:0.5;">Ctrl+K</kbd>
       </button>
       <div class="sidebar-footer-info">
         <div class="avatar" id="sidebarAvatar">DC</div>
@@ -109,13 +111,13 @@
           <div class="sidebar-footer-name" id="sidebarFooterName">David Cardoso</div>
           <div class="sidebar-footer-role" id="sidebarFooterRole">Senior Product Designer</div>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="doLogout()" title="Déconnexion" style="margin-left:auto;padding:4px 8px;flex-shrink:0;">🚪</button>
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()" title="Déconnexion" style="margin-left:auto;padding:4px 8px;flex-shrink:0;"></button>
       </div>
     </div>
   </aside>
 
   <!-- ===== MAIN CONTENT ===== -->
-  <main class="main-content">
+  <main class="main-content" id="mainContent">
 
     <!-- =========================================
          SECTION: CAPACITY PLANNING
@@ -220,7 +222,7 @@
         <div class="header-actions">
           <div class="llm-toggle-wrap">
             <label class="llm-toggle-label" for="llmToggle">
-              <span class="llm-toggle-icon">🤖</span>
+              <span class="llm-toggle-icon" data-inject-icon="bot" data-inject-size="16"></span>
               <span>Assistance LLM</span>
             </label>
             <button class="toggle-switch" id="llmToggle" role="switch" aria-checked="false" onclick="toggleLLM()">
@@ -234,7 +236,7 @@
       <div class="llm-config-panel" id="llmConfigPanel" style="display:none;">
         <div class="card">
           <div class="card-header">
-            <span class="card-title">🤖 Configuration LLM</span>
+            <span class="card-title"><span data-inject-icon="bot" data-inject-size="16" aria-hidden="true" style="margin-right:6px;vertical-align:middle;"></span>Configuration LLM</span>
             <span class="llm-status-badge" id="llmStatusBadge">Déconnecté</span>
           </div>
           <div class="llm-config-body">
@@ -265,7 +267,7 @@
       <!-- Drop Zone -->
       <label class="ics-drop-zone" id="icsDropZone" for="icsFileInput">
         <div class="drop-zone-content">
-          <div class="drop-zone-icon">📅</div>
+          <div class="drop-zone-icon" data-inject-icon="calendar" data-inject-size="32"></div>
           <div class="drop-zone-title">Importer un calendrier .ics</div>
           <div class="drop-zone-subtitle">Compatible Outlook (Mac/Windows), Google Calendar, Apple Calendar</div>
           <div style="margin-top:16px;display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;">
@@ -279,12 +281,12 @@
       <!-- Paste ICS content (always visible) -->
       <div class="card" style="margin-bottom:24px;">
         <div class="card-header">
-          <span class="card-title">📋 Coller le contenu ICS</span>
+          <span class="card-title"><span data-inject-icon="clipboard" data-inject-size="16" aria-hidden="true" style="margin-right:6px;vertical-align:middle;"></span>Coller le contenu ICS</span>
         </div>
         <div style="padding:16px;">
           <p style="margin:0 0 12px;opacity:0.6;font-size:13px;line-height:1.5;">Si le sélecteur de fichier ne fonctionne pas : ouvrez votre fichier .ics avec un éditeur de texte (Bloc-notes, TextEdit), copiez tout le contenu et collez-le ci-dessous.</p>
           <textarea id="icsPasteArea" class="form-input" rows="6" placeholder="Collez ici le contenu de votre fichier .ics&#10;(BEGIN:VCALENDAR...END:VCALENDAR)" style="font-family:monospace;font-size:12px;resize:vertical;"></textarea>
-          <button class="btn btn-primary" style="margin-top:12px;" onclick="processICSPaste()">📥 Importer le contenu collé</button>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="processICSPaste()"><span data-inject-icon="download" data-inject-size="16" aria-hidden="true" style="margin-right:6px;vertical-align:middle;"></span>Importer le contenu collé</button>
         </div>
       </div>
 
@@ -299,17 +301,17 @@
         <div class="ics-tabs">
           <div class="tab-group">
             <button class="tab-btn active" data-icstab="auto" onclick="switchICSTab('auto')">
-              ✅ Auto-classés <span class="ics-tab-count" id="autoCount">0</span>
+              <span data-inject-icon="checkCircle" data-inject-size="14" aria-hidden="true" style="margin-right:4px;vertical-align:middle;"></span>Auto-classés <span class="ics-tab-count" id="autoCount">0</span>
             </button>
             <button class="tab-btn" data-icstab="manual" onclick="switchICSTab('manual')">
-              ⚠️ À trier <span class="ics-tab-count" id="manualCount">0</span>
+              <span data-inject-icon="alertTriangle" data-inject-size="14" aria-hidden="true" style="margin-right:4px;vertical-align:middle;"></span>À trier <span class="ics-tab-count" id="manualCount">0</span>
             </button>
             <button class="tab-btn" data-icstab="ignored" onclick="switchICSTab('ignored')">
-              🚫 Ignorés <span class="ics-tab-count" id="ignoredCount">0</span>
+              <span data-inject-icon="ban" data-inject-size="14" aria-hidden="true" style="margin-right:4px;vertical-align:middle;"></span>Ignorés <span class="ics-tab-count" id="ignoredCount">0</span>
             </button>
           </div>
           <div class="ics-actions-bar">
-            <button class="btn btn-ghost btn-sm" id="llmClassifyBtn" style="display:none;" onclick="classifyWithLLM()">🤖 Classer avec LLM</button>
+            <button class="btn btn-ghost btn-sm" id="llmClassifyBtn" style="display:none;" onclick="classifyWithLLM()"><span data-inject-icon="bot" aria-hidden="true" style="margin-right:6px;vertical-align:middle;"></span>Classer avec LLM</button>
             <button class="btn btn-primary btn-sm" onclick="applyICSImport()">Appliquer à la planification</button>
           </div>
         </div>
@@ -345,7 +347,7 @@
       <!-- Live Test Field -->
       <div class="card mb-20" style="border-left:3px solid var(--primary);">
         <div style="padding:16px;">
-          <label class="form-label" style="margin-bottom:8px;display:block;">🔍 Tester un titre d'événement</label>
+          <label class="form-label" style="margin-bottom:8px;display:block;"><span data-inject-icon="search" data-inject-size="14" aria-hidden="true" style="margin-right:4px;vertical-align:middle;"></span>Tester un titre d'événement</label>
           <input type="text" class="form-input" id="mappingTestInput" placeholder="Ex: [SWD] Design — Refonte page d'accueil" oninput="liveTestMapping()" autocomplete="off" style="font-family:monospace;font-size:13px;">
           <div id="mappingTestResult" style="margin-top:10px;display:none;"></div>
         </div>
@@ -422,14 +424,14 @@
         </div>
         <div class="layer3-info mapping-layer-body" id="mappingBody3" style="display:none;">
           <div class="layer3-option">
-            <div class="layer3-option-icon">👆</div>
+            <div class="layer3-option-icon" data-inject-icon="edit" data-inject-size="24"></div>
             <div>
               <div class="layer3-option-title">Triage manuel</div>
               <div class="layer3-option-desc">Assignez produit et activité manuellement pour chaque événement non classé</div>
             </div>
           </div>
           <div class="layer3-option">
-            <div class="layer3-option-icon">🤖</div>
+            <div class="layer3-option-icon" data-inject-icon="bot" data-inject-size="24"></div>
             <div>
               <div class="layer3-option-title">Assistance LLM (optionnel)</div>
               <div class="layer3-option-desc">Activez le LLM dans l'import ICS pour classifier automatiquement les événements ambigus</div>
@@ -549,8 +551,8 @@
           <span class="timer-bar-elapsed" id="timerBarElapsed">00:00:00</span>
         </div>
         <div class="timer-bar-right">
-          <button class="btn btn-ghost btn-sm" onclick="pauseTimer()" title="Pause">⏸ Pause</button>
-          <button class="btn btn-danger btn-sm" onclick="stopTimer()" title="Stop">⏹ Terminer</button>
+          <button class="btn btn-ghost btn-icon btn-sm" data-inject-icon="pause" onclick="pauseTimer()" title="Mettre en pause" aria-label="Pause"></button>
+          <button class="btn btn-danger btn-sm" onclick="stopTimer()" title="Terminer la saisie"><span data-inject-icon="square" aria-hidden="true"></span> Terminer</button>
         </div>
       </div>
 
@@ -570,7 +572,7 @@
       <!-- Quick Add Form -->
       <div class="card mb-20" id="timesheetAddCard">
         <div class="card-header">
-          <span class="card-title">➕ Ajouter une entrée</span>
+          <span class="card-title"><span data-inject-icon="plus" data-inject-size="16" aria-hidden="true" style="margin-right:6px;vertical-align:middle;"></span>Ajouter une entrée</span>
         </div>
         <div class="timesheet-form">
           <div class="timesheet-form-row">
@@ -602,7 +604,7 @@
               <label class="form-label">Durée (HH:MM)</label>
               <input type="text" class="form-input ts-duration-input" id="tsDuration" placeholder="01:30">
             </div>
-            <button class="btn btn-ghost ts-timer-btn" id="tsStartTimerBtn" onclick="startTimerForNew()">▶ Démarrer le timer</button>
+            <button class="btn btn-ghost ts-timer-btn" id="tsStartTimerBtn" onclick="startTimerForNew()"><span data-inject-icon="play" data-inject-size="14" aria-hidden="true" style="margin-right:4px;vertical-align:middle;"></span>Démarrer le timer</button>
             <div class="form-group ts-notes-group">
               <label class="form-label">Notes <span style="opacity:0.5;font-weight:400;">(optionnel)</span></label>
               <input type="text" class="form-input" id="tsNotes" placeholder="">
@@ -611,7 +613,7 @@
           </div>
           <!-- R7.3: Repeat last + R7.4: Recent tasks -->
           <div style="padding:8px 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-ghost btn-sm" onclick="repeatLastEntry()" title="Copier la dernière entrée dans le formulaire">🔁 Répéter la dernière</button>
+            <button class="btn btn-ghost btn-icon btn-sm" data-inject-icon="redo" onclick="repeatLastEntry()" title="Répéter la dernière entrée" aria-label="Répéter la dernière entrée"></button>
             <div class="recent-tasks-list" id="recentTasksList" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
           </div>
         </div>
@@ -626,7 +628,7 @@
           </div>
           <div id="timesheetTodayList">
             <div class="empty-state">
-              <div class="empty-state-icon">⏱️</div>
+              <div class="empty-state-icon" data-inject-icon="clock" data-inject-size="32"></div>
               <div class="empty-state-text">Aucune entrée pour aujourd’hui</div>
             </div>
           </div>
@@ -664,9 +666,71 @@
           <button class="btn btn-primary btn-sm mt-12" onclick="saveProfileSettings()">Enregistrer le profil</button>
         </div>
 
+        <!-- Theme Switcher -->
+        <div class="card">
+          <div class="card-title mb-16">Apparence</div>
+          <div class="theme-selector" id="themeSelector">
+            <div class="theme-option" data-theme="current" onclick="setTheme('current')">
+              <div class="theme-preview">
+                <div class="theme-preview-colors">
+                  <span style="background:#0F1117;"></span>
+                  <span style="background:#6C5CE7;"></span>
+                  <span style="background:#00D2A0;"></span>
+                  <span style="background:#E8E9ED;"></span>
+                </div>
+              </div>
+              <div class="theme-option-label">Current (Dark Pro)</div>
+            </div>
+            <div class="theme-option" data-theme="untitledui" onclick="setTheme('untitledui')">
+              <div class="theme-preview">
+                <div class="theme-preview-colors">
+                  <span style="background:#0C111D;"></span>
+                  <span style="background:#7F56D9;"></span>
+                  <span style="background:#17B26A;"></span>
+                  <span style="background:#F5F5F6;"></span>
+                </div>
+              </div>
+              <div class="theme-option-label">UntitledUI</div>
+            </div>
+            <div class="theme-option" data-theme="swiss" onclick="setTheme('swiss')">
+              <div class="theme-preview">
+                <div class="theme-preview-colors">
+                  <span style="background:#FAFAFA;"></span>
+                  <span style="background:#E53935;"></span>
+                  <span style="background:#111111;"></span>
+                  <span style="background:#555555;"></span>
+                </div>
+              </div>
+              <div class="theme-option-label">Swiss Minimal</div>
+            </div>
+            <div class="theme-option" data-theme="brutalist" onclick="setTheme('brutalist')">
+              <div class="theme-preview">
+                <div class="theme-preview-colors">
+                  <span style="background:#F5F0EB;"></span>
+                  <span style="background:#4D9EFF;"></span>
+                  <span style="background:#FF6B9D;"></span>
+                  <span style="background:#111111;"></span>
+                </div>
+              </div>
+              <div class="theme-option-label">Pop Brutalist</div>
+            </div>
+            <div class="theme-option" data-theme="glass" onclick="setTheme('glass')">
+              <div class="theme-preview">
+                <div class="theme-preview-colors">
+                  <span style="background:#0a0a1a;"></span>
+                  <span style="background:#8B5CF6;"></span>
+                  <span style="background:#34D399;"></span>
+                  <span style="background:#F0F0F5;"></span>
+                </div>
+              </div>
+              <div class="theme-option-label">Glassmorphism</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Team Management -->
         <div class="card">
-          <div class="card-title mb-16">👥 Équipe</div>
+          <div class="card-title mb-16">Equipe</div>
           <div id="teamMembersList">
             <!-- Dynamically filled -->
           </div>
@@ -728,13 +792,13 @@
   </div>
   <div class="panel-footer">
     <div class="panel-footer-left">
-      <button class="btn btn-ghost btn-sm" onclick="openCopyWeekModal()" title="Copier cette semaine vers d'autres semaines">📋 Copier vers…</button>
-      <button class="btn btn-ghost btn-sm" onclick="openSaveTemplateModal()" title="Sauvegarder comme modèle">💾 Modèle</button>
+      <button class="btn btn-ghost btn-icon btn-sm" data-inject-icon="clipboard" onclick="openCopyWeekModal()" title="Copier vers d'autres semaines" aria-label="Copier vers d'autres semaines"></button>
+      <button class="btn btn-ghost btn-icon btn-sm" data-inject-icon="save" onclick="openSaveTemplateModal()" title="Sauvegarder comme modèle" aria-label="Sauvegarder comme modèle"></button>
     </div>
     <div class="panel-footer-right">
       <button class="btn btn-ghost" onclick="closeWeekPanel()">Annuler</button>
-      <button class="btn btn-ghost" onclick="saveAndNextWeek()" title="Enregistrer et aller à la semaine suivante">✓ + Suivante</button>
       <button class="btn btn-primary" onclick="saveWeekData()">Enregistrer</button>
+      <button class="btn btn-ghost btn-icon" data-inject-icon="arrowRight" onclick="saveAndNextWeek()" title="Enregistrer et passer à la semaine suivante" aria-label="Enregistrer et passer à la semaine suivante"></button>
     </div>
   </div>
 </div>
@@ -822,7 +886,7 @@
 <div class="modal-overlay search-modal" id="searchModal" onclick="closeSearchModal()">
   <div class="search-modal-inner" onclick="event.stopPropagation()">
     <div class="search-modal-header">
-      <span class="search-modal-icon">🔍</span>
+      <span class="search-modal-icon" data-inject-icon="search" data-inject-size="18"></span>
       <input type="text" class="search-modal-input" id="searchInput" placeholder="Rechercher stakeholders, produits, semaines..." oninput="onSearchInput(this.value)" autocomplete="off">
       <kbd class="search-kbd">ESC</kbd>
     </div>
@@ -870,12 +934,26 @@
   </div>
 </div>
 
+<!-- ===== CONFIRM MODAL ===== -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-card" role="alertdialog" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+    <div class="confirm-icon danger" id="confirmIcon"></div>
+    <h3 class="confirm-title" id="confirmTitle"></h3>
+    <p class="confirm-message" id="confirmMessage"></p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" id="confirmCancelBtn" onclick="closeConfirm()">Annuler</button>
+      <button class="btn btn-primary" id="confirmOkBtn" onclick="executeConfirm()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== TOAST CONTAINER ===== -->
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- ===== SAVE INDICATOR ===== -->
 <div class="save-indicator" id="saveIndicator"></div>
 
+<script src="./icons.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>

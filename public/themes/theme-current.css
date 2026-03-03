@@ -1,0 +1,119 @@
+/* Theme: Current (Dark Pro) - Baseline */
+
+/* Font Import */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* ─── Core Colors ─── */
+  --bg: #0F1117;
+  --bg-card: #1A1D27;
+  --bg-card-hover: #1E2130;
+  --bg-elevated: #222538;
+  --border: #2A2D3A;
+  --border-light: #353849;
+  --text: #E8E9ED;
+  --text-secondary: #B0B3C1;
+  --text-muted: #9497AB;  /* PRD-004: ajusté pour ratio contraste 4.5:1+ sur --bg: #0F1117 */
+
+  /* ─── Brand / Status Colors ─── */
+  --primary: #6C5CE7;
+  --primary-light: #8B7CF0;
+  --primary-dim: rgba(108, 92, 231, 0.15);
+  --success: #00D2A0;
+  --success-dim: rgba(0, 210, 160, 0.15);
+  --warning: #FBBF24;
+  --warning-dim: rgba(251, 191, 36, 0.15);
+  --danger: #FF6B6B;
+  --danger-dim: rgba(255, 107, 107, 0.15);
+  --teal-light: #4ECDC4;
+  --teal-light-dim: rgba(78, 205, 196, 0.15);
+  --purple-light: #A78BFA;
+  --purple-light-dim: rgba(167, 139, 250, 0.15);
+  --grey: #8B8FA3;
+  --grey-dim: rgba(139, 143, 163, 0.15);
+
+  /* ─── Layout ─── */
+  --sidebar-width: 240px;
+
+  /* ─── Border Radius ─── */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+
+  /* ─── Shadows ─── */
+  --shadow: 0 2px 8px rgba(0,0,0,0.25);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+
+  /* ─── Transitions ─── */
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ─── Typography ─── */
+  --font-body: 'DM Sans', -apple-system, sans-serif;
+  --font-heading: 'Outfit', sans-serif;
+  --font-import: url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+  --base-font-size: 14px;
+  --heading-size: 22px;
+  --heading-weight: 700;
+  --heading-letter-spacing: -0.02em;
+  --body-size: 13px;
+  --label-size: 11px;
+  --label-weight: 600;
+  --label-letter-spacing: 0.03em;
+  --label-transform: uppercase;
+
+  /* ─── Buttons ─── */
+  --btn-padding-y: 8px;
+  --btn-padding-x: 16px;
+  --btn-font-size: 13px;
+  --btn-font-weight: 500;
+  --btn-border-width: 1px;
+  --btn-radius: var(--radius-sm);
+  --btn-sm-padding-y: 5px;
+  --btn-sm-padding-x: 10px;
+  --btn-sm-font-size: 12px;
+
+  /* ─── Cards ─── */
+  --card-padding: 20px;
+  --card-gap: 16px;
+  --card-border-width: 1px;
+  --card-radius: var(--radius);
+
+  /* ─── Inputs ─── */
+  --input-padding-y: 8px;
+  --input-padding-x: 12px;
+  --input-font-size: 13px;
+  --input-border-width: 1px;
+  --input-radius: var(--radius-sm);
+
+  /* ─── Navigation ─── */
+  --nav-item-padding-y: 9px;
+  --nav-item-padding-x: 12px;
+  --nav-item-gap: 10px;
+  --nav-item-radius: var(--radius-sm);
+  --nav-item-font-size: 13px;
+
+  /* ─── Panels / Modals ─── */
+  --panel-padding: 20px;
+  --panel-radius: var(--radius-lg);
+  --modal-padding: 24px;
+  --modal-radius: var(--radius-lg);
+
+  /* ─── Sections ─── */
+  --section-padding-y: 28px;
+  --section-padding-x: 32px;
+  --section-gap: 20px;
+
+  /* ─── Scrollbar ─── */
+  --scrollbar-width: 6px;
+  --scrollbar-color: var(--border);
+
+  /* ─── Hover Effects ─── */
+  --hover-bg: rgba(255,255,255,0.04);
+  --hover-transform: translateY(-1px);
+
+  /* ─── Focus ─── */
+  --focus-ring-width: 2px;
+  --focus-ring-color: var(--primary);
+  --focus-ring-offset: 2px;
+}

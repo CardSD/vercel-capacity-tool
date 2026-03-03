@@ -325,6 +325,40 @@ document.addEventListener('DOMContentLoaded', () => {
   if (regConfirm) regConfirm.addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
 });
 
+// ========== THEME SYSTEM ==========
+const THEMES = {
+  current:    { name: 'Current (Dark Pro)',  file: './themes/theme-current.css' },
+  untitledui: { name: 'UntitledUI',          file: './themes/theme-untitledui.css' },
+  swiss:      { name: 'Swiss Minimal',       file: './themes/theme-swiss.css' },
+  brutalist:  { name: 'Pop Brutalist',       file: './themes/theme-brutalist.css' },
+  glass:      { name: 'Glassmorphism',       file: './themes/theme-glass.css' },
+};
+
+function applyTheme(themeName) {
+  const theme = THEMES[themeName];
+  if (!theme) return;
+  const link = document.getElementById('theme-css');
+  if (link) link.href = theme.file;
+  document.documentElement.setAttribute('data-theme', themeName);
+  // Update selector UI
+  document.querySelectorAll('.theme-option').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('data-theme') === themeName);
+  });
+}
+
+function setTheme(themeName) {
+  if (!THEMES[themeName]) return;
+  // Add smooth transition class
+  document.documentElement.classList.add('theme-transitioning');
+  applyTheme(themeName);
+  state.theme = themeName;
+  scheduleSave();
+  // Remove transition class after animation
+  setTimeout(() => {
+    document.documentElement.classList.remove('theme-transitioning');
+  }, 400);
+}
+
 
 function getSerializableState() {
   return {
@@ -346,6 +380,7 @@ function getSerializableState() {
     timesheetEntries: state.timesheetEntries,
     activeTimer: state.activeTimer,
     teamMembers: state.teamMembers || [],
+    theme: state.theme || 'current',
   };
 }
 
@@ -393,6 +428,7 @@ function restoreState(data) {
   state.nextRuleId = Math.max(...state.keywordRules.map(r => r.id), 0) + 1;
   // Team members
   state.teamMembers = data.teamMembers || [];
+  if (data.theme) { state.theme = data.theme; applyTheme(data.theme); }
 
   // Update UI inputs
   const capInput = document.getElementById('settingsCapacity');
@@ -544,6 +580,8 @@ let state = {
   timesheetView: 'today', // 'today' or 'week'
   // Team members (local reference list)
   teamMembers: [],
+  // Theme
+  theme: 'current',
 };
 
 // ========== UTILITY ==========
@@ -687,14 +725,76 @@ function showToast(message, type = 'info', undoCb = null) {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
+  toast.setAttribute('role', 'alert');
+  toast.setAttribute('aria-live', 'polite');
+
+  // Icon mapping for toast types
+  const toastIcons = {
+    success: typeof getIcon === 'function' ? getIcon('checkCircle', 18) : '',
+    error: typeof getIcon === 'function' ? getIcon('ban', 18) : '',
+    warning: typeof getIcon === 'function' ? getIcon('alertTriangle', 18) : '',
+    info: ''
+  };
+  const iconHtml = toastIcons[type] || '';
+
+  let html = '';
+  if (iconHtml) html += `<span class="toast-icon" aria-hidden="true">${iconHtml}</span>`;
+  html += `<span class="toast-content">${escapeHtml(message)}</span>`;
   if (undoCb) {
-    toast.innerHTML = `<span>${escapeHtml ? escapeHtml(message) : message}</span><button class="toast-undo-btn" style="margin-left:10px;background:none;border:none;color:var(--primary-light);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;" onclick="this.closest('.toast').__undoCb && this.closest('.toast').__undoCb()">Annuler</button>`;
+    html += `<button class="toast-undo" onclick="this.closest('.toast').__undoCb && this.closest('.toast').__undoCb()">Annuler</button>`;
     toast.__undoCb = undoCb;
-  } else {
-    toast.textContent = message;
   }
+  html += `<button class="toast-close" aria-label="Fermer" onclick="this.closest('.toast').remove()">×</button>`;
+  toast.innerHTML = html;
   container.appendChild(toast);
-  setTimeout(() => toast.remove(), 4000);
+  setTimeout(() => toast.remove(), 5000);
+}
+
+// ========== CONFIRM DIALOG ==========
+let _confirmCallback = null;
+
+function showConfirm({ title, message, type = 'danger', confirmLabel = 'Confirmer', onConfirm }) {
+  const overlay = document.getElementById('confirmOverlay');
+  const iconEl = document.getElementById('confirmIcon');
+  const titleEl = document.getElementById('confirmTitle');
+  const msgEl = document.getElementById('confirmMessage');
+  const okBtn = document.getElementById('confirmOkBtn');
+
+  titleEl.textContent = title || 'Êtes-vous sûr ?';
+  msgEl.textContent = message || '';
+  iconEl.className = `confirm-icon ${type}`;
+
+  // Set icon based on type
+  if (typeof getIcon === 'function') {
+    iconEl.innerHTML = type === 'warning' ? getIcon('alertTriangle', 24) : getIcon('trash', 24);
+  }
+
+  okBtn.textContent = confirmLabel;
+  if (type === 'danger') {
+    okBtn.className = 'btn btn-primary';
+    okBtn.style.background = 'var(--danger)';
+    okBtn.style.borderColor = 'var(--danger)';
+  } else {
+    okBtn.className = 'btn btn-primary';
+    okBtn.style.background = '';
+    okBtn.style.borderColor = '';
+  }
+
+  _confirmCallback = onConfirm;
+  overlay.classList.add('open');
+  okBtn.focus();
+}
+
+function executeConfirm() {
+  closeConfirm();
+  if (typeof _confirmCallback === 'function') _confirmCallback();
+  _confirmCallback = null;
+}
+
+function closeConfirm() {
+  const overlay = document.getElementById('confirmOverlay');
+  if (overlay) overlay.classList.remove('open');
+  _confirmCallback = null;
 }
 
 function getInitials(name) {
@@ -763,7 +863,11 @@ function renderTimeline() {
 
     const col = document.createElement('div');
     col.className = `week-col ${w.isCurrent ? 'current' : ''} ${isSelected ? 'selected' : ''} ${isOver ? 'over-capacity' : ''} ${w.isPast ? 'past-week' : ''}`;
+    col.setAttribute('tabindex', '0');
+    col.setAttribute('role', 'button');
+    col.title = `Semaine ${w.weekNum} — Cliquer pour editer (${total}h/${state.weeklyCapacity}h)`;
     col.onclick = () => selectWeek(w.key, w);
+    col.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectWeek(w.key, w); } };
 
     let sprintHtml = '';
     if (idx % 2 === 0) {
@@ -1271,7 +1375,7 @@ function renderWeekPanelTasks(tasks, weekKey, productId, categoryId) {
       // Purely manual/bulk hours
       html += `
         <div class="wp-task-item wp-task-manual">
-          <div class="wp-task-icon" title="Heures manuelles">📋</div>
+          <div class="wp-task-icon" title="Heures manuelles">${typeof getIcon === 'function' ? getIcon('clipboard', 14) : '📋'}</div>
           <div class="wp-task-info">
             <span class="wp-task-name">${escapeHtml(t.name)}</span>
           </div>
@@ -1282,7 +1386,9 @@ function renderWeekPanelTasks(tasks, weekKey, productId, categoryId) {
       const stakeholder = t.stakeholderId ? state.stakeholders.find(s => s.id === t.stakeholderId) : null;
       const isActive = state.activeTimer && state.activeTimer.entryId === t.id;
       const isICS = t.type === 'ics';
-      const icon = isICS ? '📅' : (t.fromTimer ? '⏱️' : '✏️');
+      const icon = typeof getIcon === 'function'
+        ? (isICS ? getIcon('calendar', 14) : (t.fromTimer ? getIcon('clock', 14) : getIcon('edit', 14)))
+        : (isICS ? '📅' : (t.fromTimer ? '⏱️' : '✏️'));
       const sourceLabel = isICS ? 'ICS' : (t.fromTimer ? 'timer' : 'saisie');
       html += `
         <div class="wp-task-item ${isActive ? 'wp-task-timer-active' : ''} ${isICS ? 'wp-task-ics' : ''}" data-ts-id="${t.id}">
@@ -1291,15 +1397,15 @@ function renderWeekPanelTasks(tasks, weekKey, productId, categoryId) {
             <span class="wp-task-name">${escapeHtml(t.name)}</span>
             <span class="wp-task-meta">
               ${t.date ? '<span class="wp-task-date">' + t.date.slice(5) + '</span>' : ''}
-              ${stakeholder ? '<span class="wp-task-stakeholder">👤 ' + escapeHtml(stakeholder.name) + '</span>' : ''}
+              ${stakeholder ? '<span class="wp-task-stakeholder">' + (typeof getIcon === 'function' ? getIcon('user', 12) : '') + ' ' + escapeHtml(stakeholder.name) + '</span>' : ''}
               <span class="wp-task-source-tag wp-task-source-${isICS ? 'ics' : 'ts'}">${sourceLabel}</span>
-              ${t.notes ? '<span class="wp-task-notes" title="' + escapeHtml(t.notes) + '">📝</span>' : ''}
+              ${t.notes ? '<span class="wp-task-notes" title="' + escapeHtml(t.notes) + '">' + (typeof getIcon === 'function' ? getIcon('fileText', 12) : '') + '</span>' : ''}
             </span>
           </div>
           <span class="wp-task-dur ${isActive ? 'timer-pulse' : ''}">${formatMinutes(t.durationMinutes)}</span>
           <div class="wp-task-actions">
-            <button class="wp-task-action-btn" onclick="editWeekTask(${t.id})" title="Modifier">✏️</button>
-            <button class="wp-task-action-btn wp-task-delete" onclick="deleteWeekTask(${t.id},'${weekKey}')" title="Supprimer">🗑️</button>
+            <button class="wp-task-action-btn" onclick="editWeekTask(${t.id})" title="Modifier">${typeof getIcon === 'function' ? getIcon('edit', 14) : '✏️'}</button>
+            <button class="wp-task-action-btn wp-task-delete" onclick="deleteWeekTask(${t.id},'${weekKey}')" title="Supprimer">${typeof getIcon === 'function' ? getIcon('trash', 14) : '🗑️'}</button>
           </div>
         </div>`;
     }
@@ -1620,7 +1726,13 @@ function updateDonut() {
 
   document.getElementById('donutCenterHours').textContent = grandTotal + 'h';
   const scopeLabels = { week: 'cette semaine', cycle: 'ce cycle', all: 'toutes semaines' };
-  document.getElementById('donutCenterText').textContent = scopeLabels[state.donutScope];
+  document.getElementById('donutCenterText').textContent = grandTotal === 0 ? 'aucune donnee' : scopeLabels[state.donutScope];
+
+  // Show empty state styling when no data
+  const donutWrapper = document.querySelector('.donut-wrapper');
+  if (donutWrapper) {
+    donutWrapper.classList.toggle('donut-empty', grandTotal === 0);
+  }
 
   const legend = document.getElementById('donutLegend');
   legend.innerHTML = items.map((item, i) => {
@@ -2038,9 +2150,9 @@ function renderStakeholderTable() {
         </td>
         <td>
           <div class="action-btns">
-            <button class="action-btn" onclick="openStakeholderDetailModal(${sh.id})" title="Détail">👁️</button>
-            <button class="action-btn" onclick="openStakeholderModal(${sh.id})" title="Modifier">✏️</button>
-            <button class="action-btn delete" onclick="deleteStakeholder(${sh.id})" title="Supprimer">🗑️</button>
+            <button class="action-btn" onclick="openStakeholderDetailModal(${sh.id})" title="Détail">${typeof getIcon === 'function' ? getIcon('eye', 16) : '👁️'}</button>
+            <button class="action-btn" onclick="openStakeholderModal(${sh.id})" title="Modifier">${typeof getIcon === 'function' ? getIcon('edit', 16) : '✏️'}</button>
+            <button class="action-btn delete" onclick="deleteStakeholder(${sh.id})" title="Supprimer">${typeof getIcon === 'function' ? getIcon('trash', 16) : '🗑️'}</button>
           </div>
         </td>
       </tr>
@@ -2200,7 +2312,7 @@ function renderNetwork() {
   if (!container) return;
 
   if (state.stakeholders.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔗</div><div class="empty-state-text">Aucune partie prenante</div></div>';
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${typeof getIcon === 'function' ? getIcon('users', 32) : '🔗'}</div><div class="empty-state-text">Aucune partie prenante</div></div>`;
     return;
   }
 
@@ -2720,7 +2832,7 @@ function renderAutoEventList() {
   if (!container) return;
 
   if (state.icsAutoEvents.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">Aucun événement auto-classé</div></div>';
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${typeof getIcon === 'function' ? getIcon('calendar', 32) : '📭'}</div><div class="empty-state-text">Aucun événement auto-classé</div></div>`;
     return;
   }
 
@@ -2756,7 +2868,7 @@ function renderManualEventList() {
   if (!container) return;
 
   if (state.icsManualEvents.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">Tous les événements ont été classés automatiquement</div></div>';
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${typeof getIcon === 'function' ? getIcon('checkCircle', 32) : '✅'}</div><div class="empty-state-text">Tous les événements ont été classés automatiquement</div></div>`;
     return;
   }
 
@@ -2802,7 +2914,7 @@ function renderIgnoredEventList() {
   if (!container) return;
 
   if (state.icsIgnoredEvents.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎉</div><div class="empty-state-text">Aucun événement ignoré</div></div>';
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${typeof getIcon === 'function' ? getIcon('partyPopper', 32) : '🎉'}</div><div class="empty-state-text">Aucun événement ignoré</div></div>`;
     return;
   }
 
@@ -3869,7 +3981,8 @@ function renderTimesheetTodayView() {
   if (!listEl) return;
 
   if (todayEntries.length === 0) {
-    listEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⏱️</div><div class="empty-state-text">Aucune entrée pour aujourd’hui</div></div>`;
+    const clockIcon = typeof getIcon === 'function' ? getIcon('clock', 32) : '';
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">' + clockIcon + '</div><div class="empty-state-text">Aucune entr\u00E9e pour aujourd\'hui</div></div>';
     return;
   }
 
@@ -3903,7 +4016,7 @@ function renderTimesheetWeekView() {
   html += `<div class="card-header"><span class="card-title">Cette semaine</span><span class="ts-total-badge">${formatMinutes(totalWeekMinutes)}</span></div>`;
 
   if (weekEntries.length === 0) {
-    html += `<div class="empty-state"><div class="empty-state-icon">📅</div><div class="empty-state-text">Aucune entrée pour cette semaine</div></div>`;
+    html += `<div class="empty-state"><div class="empty-state-icon">${typeof getIcon === 'function' ? getIcon('calendar', 32) : '📅'}</div><div class="empty-state-text">Aucune entrée pour cette semaine</div></div>`;
   } else {
     // Sort dates
     const sortedDates = Object.keys(byDay).sort();
@@ -3940,7 +4053,7 @@ function renderTimesheetEntryRow(entry) {
     ? `<span class="ts-badge ts-badge-stakeholder">👤 ${stakeholder.name}</span>`
     : '';
   const timerBadge = entry.fromTimer
-    ? `<span class="ts-badge ts-badge-from-timer">⏱️ timer</span>`
+    ? '<span class="ts-badge ts-badge-from-timer">' + (typeof getIcon === 'function' ? getIcon('clock', 12) : '') + ' timer</span>'
     : '';
 
   // Duration display: if timer is running on this entry, show live
@@ -3959,8 +4072,8 @@ function renderTimesheetEntryRow(entry) {
       </div>
       ${durationDisplay}
       <div class="ts-entry-actions">
-        <button class="action-btn" onclick="editTimesheetEntry(${entry.id})" title="Modifier">✏️</button>
-        <button class="action-btn delete" onclick="deleteTimesheetEntry(${entry.id})" title="Supprimer">🗑️</button>
+        <button class="action-btn" onclick="editTimesheetEntry(${entry.id})" title="Modifier">${typeof getIcon === 'function' ? getIcon('edit', 16) : '✏️'}</button>
+        <button class="action-btn delete" onclick="deleteTimesheetEntry(${entry.id})" title="Supprimer">${typeof getIcon === 'function' ? getIcon('trash', 16) : '🗑️'}</button>
       </div>
     </div>
   `;
@@ -4084,6 +4197,16 @@ function setupKeyboardShortcuts() {
       const genericModal = document.getElementById('genericModal');
       if (genericModal && genericModal.classList.contains('open')) {
         closeGenericModal();
+        return;
+      }
+      const shModal = document.getElementById('stakeholderModal');
+      if (shModal && shModal.classList.contains('open')) {
+        closeStakeholderModal();
+        return;
+      }
+      const panel = document.getElementById('weekPanel');
+      if (panel && panel.classList.contains('open')) {
+        closeWeekPanel();
         return;
       }
     }
@@ -4234,10 +4357,14 @@ function bootApp() {
   // R2.1: select current week by default
   const currentWeek = allWeeks.find(w => w.isCurrent);
   state.selectedWeekKey = currentWeek ? currentWeek.key : allWeeks[0].key;
+  // Apply saved theme
+  applyTheme(state.theme || 'current');
   renderAll();
   renderKPIBar();
   setupICSDropZone();
   setupKeyboardShortcuts(); // R10.3
+  injectSVGIcons(); // Phase 1: replace emoji with SVG icons
+  setupNavKeyboard(); // Phase 1: keyboard nav for sidebar
 }
 
 // Handle window resize for network view
@@ -4258,10 +4385,117 @@ function handleHashRoute() {
 window.addEventListener('hashchange', handleHashRoute);
 handleHashRoute();
 
-// Legacy escape handler (supplemental — main handler in setupKeyboardShortcuts)
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    closeWeekPanel();
-    closeStakeholderModal();
+// ========== PHASE 1: SVG ICON INJECTION ==========
+function injectSVGIcons() {
+  if (typeof getIcon !== 'function') return;
+
+  // === Generic: inject by data-inject-icon attribute ===
+  document.querySelectorAll('[data-inject-icon]').forEach(el => {
+    const iconName = el.getAttribute('data-inject-icon');
+    const sizeAttr = el.getAttribute('data-inject-size');
+    const size = sizeAttr ? parseInt(sizeAttr, 10) : (el.classList.contains('btn-sm') ? 16 : 18);
+    el.innerHTML = getIcon(iconName, size);
+  });
+
+  // === Nav items (sidebar navigation) ===
+  const navIconMap = {
+    'capacity': 'barChart',
+    'ics-import': 'calendar',
+    'stakeholders': 'users',
+    'timesheet': 'clock',
+    'mapping-rules': 'wrench',
+    'settings': 'settings',
+  };
+  document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+    const section = item.getAttribute('data-section');
+    const iconSpan = item.querySelector('.nav-item-icon');
+    if (iconSpan && navIconMap[section]) {
+      iconSpan.innerHTML = getIcon(navIconMap[section], 20);
+    }
+  });
+
+  // Export nav item
+  const exportItem = document.querySelector('.nav-item[onclick*="exportAllData"]');
+  if (exportItem) {
+    const iconSpan = exportItem.querySelector('.nav-item-icon');
+    if (iconSpan) iconSpan.innerHTML = getIcon('download', 20);
   }
-});
+
+  // Import nav item
+  const importItem = document.querySelector('label.nav-item[for="importFile"]');
+  if (importItem) {
+    const iconSpan = importItem.querySelector('.nav-item-icon');
+    if (iconSpan) iconSpan.innerHTML = getIcon('upload', 20);
+  }
+
+  // Search button icon
+  const searchBtn = document.querySelector('[onclick*="openSearchModal"]');
+  if (searchBtn) {
+    const iconSpan = searchBtn.querySelector('span[aria-hidden]');
+    if (iconSpan) iconSpan.innerHTML = getIcon('search', 16);
+  }
+
+  // Logout button icon
+  const logoutBtn = document.querySelector('[onclick*="doLogout"]');
+  if (logoutBtn) {
+    logoutBtn.innerHTML = getIcon('logOut', 16);
+  }
+
+  // Sidebar logo icon
+  document.querySelectorAll('.sidebar-logo-icon').forEach(el => {
+    el.innerHTML = getIcon('zap', 20);
+  });
+
+  // Timeline navigation arrows
+  const prevBtn = document.querySelector('[onclick*="shiftTimeline(-1)"]');
+  if (prevBtn) prevBtn.innerHTML = getIcon('chevronLeft', 16);
+  const nextBtn = document.querySelector('[onclick*="shiftTimeline(1)"]');
+  if (nextBtn) nextBtn.innerHTML = getIcon('chevronRight', 16);
+}
+
+// ========== PHASE 1: KEYBOARD NAV FOR SIDEBAR ==========
+function setupNavKeyboard() {
+  document.querySelectorAll('.nav-item[tabindex="0"]').forEach(item => {
+    item.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        item.click();
+      }
+    });
+  });
+}
+
+// ========== FOCUS TRAP FOR MODALS ==========
+function trapFocus(e) {
+  // Also handle confirm modal
+  const confirmOverlay = document.getElementById('confirmOverlay');
+  if (confirmOverlay && confirmOverlay.classList.contains('open')) {
+    if (e.key === 'Escape') { closeConfirm(); return; }
+    if (e.key !== 'Tab') return;
+    const card = confirmOverlay.querySelector('.confirm-card');
+    const focusable = card.querySelectorAll('button');
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    return;
+  }
+
+  const openModal = document.querySelector('.modal-overlay.open .modal, .slide-panel.open, .search-modal.open .search-modal-inner');
+  if (!openModal) return;
+  if (e.key !== 'Tab') return;
+  const focusable = openModal.querySelectorAll('button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (e.shiftKey) {
+    if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+  } else {
+    if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+}
+document.addEventListener('keydown', trapFocus);

@@ -1,0 +1,116 @@
+/* Theme: Pop Brutalist */
+/* Neo-brutalism meets pop art - Bold, colorful, unapologetic */
+/* Light theme with hard shadows, thick borders, saturated colors */
+
+/* Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  /* --- Color Tokens --- */
+  --bg: #F5F0EB;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #FFF8F0;
+  --bg-elevated: #FFFFFF;
+  --border: #111111;
+  --border-light: #333333;
+  --text: #111111;
+  --text-secondary: #444444;
+  --text-muted: #777777;
+
+  /* Brand - Electric blue */
+  --primary: #4D9EFF;
+  --primary-light: #79B8FF;
+  --primary-dim: rgba(77, 158, 255, 0.12);
+
+  /* Semantic - Saturated */
+  --success: #00C853;
+  --success-dim: rgba(0, 200, 83, 0.1);
+  --warning: #FFB300;
+  --warning-dim: rgba(255, 179, 0, 0.12);
+  --danger: #FF1744;
+  --danger-dim: rgba(255, 23, 68, 0.1);
+  --teal-light: #00BFA5;
+  --teal-light-dim: rgba(0, 191, 165, 0.1);
+  --purple-light: #D500F9;
+  --purple-light-dim: rgba(213, 0, 249, 0.1);
+  --grey: #777777;
+  --grey-dim: rgba(119, 119, 119, 0.1);
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --radius: 0px;
+  --radius-sm: 0px;
+  --radius-lg: 0px;
+  --shadow: 4px 4px 0px #111111;
+  --shadow-lg: 6px 6px 0px #111111;
+  --transition: 0.1s ease;
+  --transition-slow: 0.15s ease;
+
+  /* --- Typography --- */
+  --font-body: 'Space Grotesk', -apple-system, sans-serif;
+  --font-heading: 'Space Grotesk', -apple-system, sans-serif;
+  --base-font-size: 15px;
+  --heading-size: 26px;
+  --heading-weight: 700;
+  --heading-letter-spacing: -0.01em;
+  --body-size: 14px;
+  --label-size: 11px;
+  --label-weight: 700;
+  --label-letter-spacing: 0.06em;
+  --label-transform: uppercase;
+
+  /* --- Buttons --- */
+  --btn-padding-y: 10px;
+  --btn-padding-x: 20px;
+  --btn-font-size: 14px;
+  --btn-font-weight: 700;
+  --btn-border-width: 2px;
+  --btn-radius: 0px;
+  --btn-sm-padding-y: 7px;
+  --btn-sm-padding-x: 14px;
+  --btn-sm-font-size: 13px;
+
+  /* --- Cards --- */
+  --card-padding: 20px;
+  --card-gap: 16px;
+  --card-border-width: 2px;
+  --card-radius: 0px;
+
+  /* --- Inputs --- */
+  --input-padding-y: 10px;
+  --input-padding-x: 14px;
+  --input-font-size: 14px;
+  --input-border-width: 2px;
+  --input-radius: 0px;
+
+  /* --- Navigation --- */
+  --nav-item-padding-y: 10px;
+  --nav-item-padding-x: 14px;
+  --nav-item-gap: 10px;
+  --nav-item-radius: 0px;
+  --nav-item-font-size: 14px;
+
+  /* --- Panels/Modals --- */
+  --panel-padding: 24px;
+  --panel-radius: 0px;
+  --modal-padding: 24px;
+  --modal-radius: 0px;
+
+  /* --- Sections --- */
+  --section-padding-y: 28px;
+  --section-padding-x: 32px;
+  --section-gap: 20px;
+
+  /* --- Scrollbar --- */
+  --scrollbar-width: 8px;
+  --scrollbar-color: #111111;
+
+  /* --- Hover --- */
+  --hover-bg: rgba(0, 0, 0, 0.05);
+  --hover-transform: translate(-2px, -2px);
+
+  /* --- Focus --- */
+  --focus-ring-width: 3px;
+  --focus-ring-color: #4D9EFF;
+  --focus-ring-offset: 0px;
+}

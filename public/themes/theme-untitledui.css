@@ -1,0 +1,115 @@
+/* Theme: UntitledUI Default */
+/* Professional, clean, accessible - inspired by Untitled UI design system */
+
+/* Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* --- Color Tokens --- */
+  --bg: #0C111D;
+  --bg-card: #161B26;
+  --bg-card-hover: #1F242F;
+  --bg-elevated: #1F242F;
+  --border: #333741;
+  --border-light: #474B57;
+  --text: #F5F5F6;
+  --text-secondary: #94969C;
+  --text-muted: #85888E;
+
+  /* Brand - UntitledUI indigo */
+  --primary: #7F56D9;
+  --primary-light: #9E77ED;
+  --primary-dim: rgba(127, 86, 217, 0.15);
+
+  /* Semantic */
+  --success: #17B26A;
+  --success-dim: rgba(23, 178, 106, 0.15);
+  --warning: #F79009;
+  --warning-dim: rgba(247, 144, 9, 0.15);
+  --danger: #F04438;
+  --danger-dim: rgba(240, 68, 56, 0.15);
+  --teal-light: #15B79E;
+  --teal-light-dim: rgba(21, 183, 158, 0.15);
+  --purple-light: #9E77ED;
+  --purple-light-dim: rgba(158, 119, 237, 0.15);
+  --grey: #85888E;
+  --grey-dim: rgba(133, 136, 142, 0.15);
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --radius-lg: 12px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-lg: 0 12px 16px -4px rgba(16, 24, 40, 0.08), 0 4px 6px -2px rgba(16, 24, 40, 0.03);
+  --transition: 0.15s ease;
+  --transition-slow: 0.25s ease;
+
+  /* --- Typography --- */
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-heading: 'Inter', -apple-system, sans-serif;
+  --base-font-size: 14px;
+  --heading-size: 24px;
+  --heading-weight: 600;
+  --heading-letter-spacing: -0.02em;
+  --body-size: 14px;
+  --label-size: 12px;
+  --label-weight: 500;
+  --label-letter-spacing: 0em;
+  --label-transform: none;
+
+  /* --- Buttons --- */
+  --btn-padding-y: 10px;
+  --btn-padding-x: 18px;
+  --btn-font-size: 14px;
+  --btn-font-weight: 600;
+  --btn-border-width: 1px;
+  --btn-radius: 8px;
+  --btn-sm-padding-y: 8px;
+  --btn-sm-padding-x: 14px;
+  --btn-sm-font-size: 13px;
+
+  /* --- Cards --- */
+  --card-padding: 24px;
+  --card-gap: 20px;
+  --card-border-width: 1px;
+  --card-radius: 12px;
+
+  /* --- Inputs --- */
+  --input-padding-y: 10px;
+  --input-padding-x: 14px;
+  --input-font-size: 14px;
+  --input-border-width: 1px;
+  --input-radius: 8px;
+
+  /* --- Navigation --- */
+  --nav-item-padding-y: 8px;
+  --nav-item-padding-x: 12px;
+  --nav-item-gap: 12px;
+  --nav-item-radius: 6px;
+  --nav-item-font-size: 14px;
+
+  /* --- Panels/Modals --- */
+  --panel-padding: 24px;
+  --panel-radius: 12px;
+  --modal-padding: 24px;
+  --modal-radius: 12px;
+
+  /* --- Sections --- */
+  --section-padding-y: 32px;
+  --section-padding-x: 32px;
+  --section-gap: 24px;
+
+  /* --- Scrollbar --- */
+  --scrollbar-width: 6px;
+  --scrollbar-color: var(--border);
+
+  /* --- Hover --- */
+  --hover-bg: rgba(255,255,255,0.04);
+  --hover-transform: translateY(-1px);
+
+  /* --- Focus --- */
+  --focus-ring-width: 4px;
+  --focus-ring-color: rgba(127, 86, 217, 0.24);
+  --focus-ring-offset: 0px;
+}

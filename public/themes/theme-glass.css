@@ -1,0 +1,116 @@
+/* Theme: Glassmorphism */
+/* Frosted glass, translucent surfaces, premium dark aesthetic */
+/* Dark theme with blur effects and luminous borders */
+
+/* Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* --- Color Tokens --- */
+  --bg: #0a0a1a;
+  --bg-card: rgba(255, 255, 255, 0.05);
+  --bg-card-hover: rgba(255, 255, 255, 0.08);
+  --bg-elevated: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-light: rgba(255, 255, 255, 0.18);
+  --text: #F0F0F5;
+  --text-secondary: #A8A8B8;
+  --text-muted: #7A7A8E;
+
+  /* Brand - Luminous violet */
+  --primary: #8B5CF6;
+  --primary-light: #A78BFA;
+  --primary-dim: rgba(139, 92, 246, 0.2);
+
+  /* Semantic */
+  --success: #34D399;
+  --success-dim: rgba(52, 211, 153, 0.15);
+  --warning: #FBBF24;
+  --warning-dim: rgba(251, 191, 36, 0.15);
+  --danger: #F87171;
+  --danger-dim: rgba(248, 113, 113, 0.15);
+  --teal-light: #2DD4BF;
+  --teal-light-dim: rgba(45, 212, 191, 0.15);
+  --purple-light: #C4B5FD;
+  --purple-light-dim: rgba(196, 181, 253, 0.15);
+  --grey: #7A7A8E;
+  --grey-dim: rgba(122, 122, 142, 0.15);
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-lg: 24px;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* --- Typography --- */
+  --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --base-font-size: 14px;
+  --heading-size: 22px;
+  --heading-weight: 600;
+  --heading-letter-spacing: -0.02em;
+  --body-size: 13px;
+  --label-size: 11px;
+  --label-weight: 500;
+  --label-letter-spacing: 0.02em;
+  --label-transform: uppercase;
+
+  /* --- Buttons --- */
+  --btn-padding-y: 10px;
+  --btn-padding-x: 20px;
+  --btn-font-size: 13px;
+  --btn-font-weight: 500;
+  --btn-border-width: 1px;
+  --btn-radius: 12px;
+  --btn-sm-padding-y: 6px;
+  --btn-sm-padding-x: 14px;
+  --btn-sm-font-size: 12px;
+
+  /* --- Cards --- */
+  --card-padding: 24px;
+  --card-gap: 20px;
+  --card-border-width: 1px;
+  --card-radius: 16px;
+
+  /* --- Inputs --- */
+  --input-padding-y: 10px;
+  --input-padding-x: 14px;
+  --input-font-size: 13px;
+  --input-border-width: 1px;
+  --input-radius: 12px;
+
+  /* --- Navigation --- */
+  --nav-item-padding-y: 10px;
+  --nav-item-padding-x: 14px;
+  --nav-item-gap: 10px;
+  --nav-item-radius: 12px;
+  --nav-item-font-size: 13px;
+
+  /* --- Panels/Modals --- */
+  --panel-padding: 24px;
+  --panel-radius: 24px;
+  --modal-padding: 28px;
+  --modal-radius: 24px;
+
+  /* --- Sections --- */
+  --section-padding-y: 28px;
+  --section-padding-x: 32px;
+  --section-gap: 24px;
+
+  /* --- Scrollbar --- */
+  --scrollbar-width: 5px;
+  --scrollbar-color: rgba(255, 255, 255, 0.15);
+
+  /* --- Hover --- */
+  --hover-bg: rgba(255, 255, 255, 0.06);
+  --hover-transform: translateY(-1px);
+
+  /* --- Focus --- */
+  --focus-ring-width: 2px;
+  --focus-ring-color: rgba(139, 92, 246, 0.5);
+  --focus-ring-offset: 2px;
+}
