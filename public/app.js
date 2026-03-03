@@ -1,72 +1,101 @@
 /* =========================================
    Capacity & Stakeholder Tool — App Logic
    Multi-Product Edition + ICS Import
-   Client-side IndexedDB persistence & multi-user
+   Multi-User Edition: Supabase Auth + PostgreSQL
    Vercel Edition: LLM proxy via serverless function
    ========================================= */
 
-// LLM proxy — uses Vercel serverless function when available, falls back to direct call
+// LLM proxy — uses Vercel serverless function with JWT authentication
 const LLM_PROXY_URL = '/api/llm';
 
-// ========== PERSISTENCE & AUTH ==========
+// ========== SUPABASE INITIALIZATION ==========
 
-const DB_NAME = 'capacitytool';
-const DB_VERSION = 2;
-let db = null;
-let dbAvailable = false;
-let sessionToken = null;
 let currentUser = null;
 let saveTimeout = null;
 let isSaving = false;
 
-function initDB() {
-  return new Promise((resolve) => {
-    try {
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = (e) => {
-        const d = e.target.result;
-        if (!d.objectStoreNames.contains('state')) d.createObjectStore('state');
-        if (!d.objectStoreNames.contains('users')) d.createObjectStore('users');
-      };
-      req.onsuccess = (e) => { db = e.target.result; dbAvailable = true; resolve(true); };
-      req.onerror = () => resolve(false);
-    } catch (err) { resolve(false); }
-  });
+// Initialize Supabase on page load
+async function initSupabaseAndApp() {
+  // Load Supabase
+  const ok = await initSupabase();
+  if (!ok) {
+    showAuthError('loginError', 'Configuration Supabase manquante. Vérifiez les variables d\'environnement.');
+    console.error('Supabase initialization failed');
+    return false;
+  }
+
+  // Try to restore existing session
+  const hasSession = await restoreSession();
+  if (hasSession && currentSession) {
+    // User already logged in
+    console.log('✓ Session restored for:', currentUser.email);
+    await loadAppStateFromSupabase();
+    enterApp();
+    return true;
+  }
+
+  // Otherwise show auth screen
+  document.getElementById('authScreen').style.display = 'flex';
+  return false;
 }
 
-function dbGet(store, key) {
-  return new Promise((resolve) => {
-    if (!db) return resolve(null);
-    try {
-      const tx = db.transaction(store, 'readonly');
-      const s = tx.objectStore(store);
-      const req = s.get(key);
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => resolve(null);
-    } catch (err) { resolve(null); }
-  });
+// Load application state from Supabase
+async function loadAppStateFromSupabase() {
+  try {
+    const dbState = await loadAppState();
+    if (dbState) {
+      // Map Supabase data to global state
+      state.products = dbState.products || [];
+      state.categories = dbState.categories || [];
+      state.stakeholders = dbState.stakeholders || [];
+      state.week_templates = dbState.week_templates || [];
+      state.keyword_rules = dbState.keyword_rules || [];
+      state.icsAutoEvents = dbState.ics_auto_events || [];
+      state.icsManualEvents = dbState.ics_manual_events || [];
+      state.icsIgnoredEvents = dbState.ics_ignored_events || [];
+      state.llmProvider = dbState.llm_provider || 'openai';
+      serverDataLoaded = true;
+      console.log('✓ App state loaded from Supabase');
+    } else {
+      console.log('ℹ No existing app state, creating new one');
+      // State will be created on first save
+    }
+  } catch (error) {
+    console.error('Error loading app state:', error);
+  }
 }
 
-function dbPut(store, key, value) {
-  return new Promise((resolve) => {
-    if (!db) return resolve(false);
-    try {
-      const tx = db.transaction(store, 'readwrite');
-      const s = tx.objectStore(store);
-      s.put(value, key);
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => resolve(false);
-    } catch (err) { resolve(false); }
-  });
-}
+// Save application state to Supabase
+async function saveAppStateToSupabase() {
+  if (!currentSession) {
+    console.warn('⚠ Cannot save: not authenticated');
+    return false;
+  }
 
-// SHA-256 hash helper
-async function sha256(text) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  try {
+    const success = await saveAppState({
+      products: state.products,
+      categories: state.categories,
+      stakeholders: state.stakeholders,
+      week_templates: state.week_templates,
+      keyword_rules: state.keyword_rules,
+      ics_auto_events: state.icsAutoEvents,
+      ics_manual_events: state.icsManualEvents,
+      ics_ignored_events: state.icsIgnoredEvents,
+      llmProvider: state.llmProvider,
+    });
+
+    if (success) {
+      isSaving = false;
+      return true;
+    } else {
+      console.error('✗ Failed to save app state');
+      return false;
+    }
+  } catch (error) {
+    console.error('Error saving app state:', error);
+    return false;
+  }
 }
 
 // ─── Auth tab switch ──────────────────────────────────────────────────────────
@@ -89,7 +118,7 @@ function showAuthError(formId, msg) {
   el.style.display = 'block';
 }
 
-// ─── Login ────────────────────────────────────────────────────────────────────
+// ─── Login (Supabase) ─────────────────────────────────────────────────────────
 async function doLogin() {
   const email = (document.getElementById('loginEmail').value || '').trim().toLowerCase();
   const password = document.getElementById('loginPassword').value || '';
@@ -102,47 +131,20 @@ async function doLogin() {
   btn.textContent = 'Connexion...';
   btn.disabled = true;
 
-  await initDB();
-  if (!dbAvailable) {
-    showAuthError('loginError', 'Stockage indisponible dans ce navigateur');
-    btn.textContent = 'Se connecter';
-    btn.disabled = false;
-    return;
+  try {
+    await supabaseLogin(email, password);  // Call Supabase login
+    await loadAppStateFromSupabase();
+    await loadLLMConfig();
+    enterApp();
+  } catch (error) {
+    showAuthError('loginError', error.message || 'Erreur de connexion');
   }
 
-  const pwHash = await sha256(password);
-  const userKey = await sha256(email);
-
-  const user = await dbGet('users', userKey);
-  if (!user) {
-    showAuthError('loginError', "Aucun compte trouvé — inscrivez-vous d'abord");
-    btn.textContent = 'Se connecter';
-    btn.disabled = false;
-    return;
-  }
-  if (user.pwHash !== pwHash) {
-    showAuthError('loginError', 'Mot de passe incorrect');
-    btn.textContent = 'Se connecter';
-    btn.disabled = false;
-    return;
-  }
-
-  sessionToken = userKey;
-  currentUser = { email: user.email, display_name: user.display_name, role: user.role };
-
-  const savedData = await dbGet('state', sessionToken);
-  if (savedData) {
-    restoreState(savedData);
-    serverDataLoaded = true;
-  }
-
-  await loadLLMConfig();
-  enterApp();
   btn.textContent = 'Se connecter';
   btn.disabled = false;
 }
 
-// ─── Register ─────────────────────────────────────────────────────────────────
+// ─── Register (Supabase) ──────────────────────────────────────────────────────
 async function doRegister() {
   const display_name = (document.getElementById('regName').value || '').trim();
   const role = (document.getElementById('regRole').value || '').trim();
@@ -167,40 +169,15 @@ async function doRegister() {
   btn.textContent = 'Création...';
   btn.disabled = true;
 
-  await initDB();
-  if (!dbAvailable) {
-    showAuthError('registerError', 'Stockage indisponible dans ce navigateur');
-    btn.textContent = 'Créer mon compte';
-    btn.disabled = false;
-    return;
+  try {
+    await supabaseRegister(email, password, display_name, role);  // Call Supabase register
+    await loadAppStateFromSupabase();
+    await loadLLMConfig();
+    enterApp();
+  } catch (error) {
+    showAuthError('registerError', error.message || 'Erreur lors de l\'enregistrement');
   }
 
-  const pwHash = await sha256(password);
-  const userKey = await sha256(email);
-
-  // Check if user exists with different password
-  const existing = await dbGet('users', userKey);
-  if (existing && existing.pwHash !== pwHash) {
-    showAuthError('registerError', 'Un compte avec cet email existe déjà');
-    btn.textContent = 'Créer mon compte';
-    btn.disabled = false;
-    return;
-  }
-
-  // Save user profile
-  await dbPut('users', userKey, { email, display_name, role, pwHash, created: Date.now() });
-
-  sessionToken = userKey;
-  currentUser = { email, display_name, role };
-
-  // Try to load existing state
-  const savedData = await dbGet('state', sessionToken);
-  if (savedData) {
-    restoreState(savedData);
-    serverDataLoaded = true;
-  }
-
-  enterApp();
   btn.textContent = 'Créer mon compte';
   btn.disabled = false;
 }
@@ -231,9 +208,12 @@ function enterApp() {
 }
 
 // ─── Logout ───────────────────────────────────────────────────────────────────
-function doLogout() {
-  sessionToken = null;
+async function doLogout() {
+  // Logout from Supabase
+  await supabaseLogout();
+
   currentUser = null;
+  currentSession = null;
   serverDataLoaded = false;
 
   // Reset state
@@ -274,22 +254,23 @@ function doLogout() {
   switchAuthTab('login');
 }
 
-// ─── Save to IndexedDB ────────────────────────────────────────────────────────
+// ─── Save to Supabase ─────────────────────────────────────────────────────────
 async function saveToStorage() {
-  if (!sessionToken || isSaving || !dbAvailable) return;
+  if (!currentSession || isSaving) return;
   isSaving = true;
   showSaveIndicator('saving');
   try {
-    const ok = await dbPut('state', sessionToken, getSerializableState());
+    const ok = await saveAppStateToSupabase();
     showSaveIndicator(ok ? 'saved' : 'error');
   } catch (err) {
+    console.error('Save error:', err);
     showSaveIndicator('error');
   }
   isSaving = false;
 }
 
 function scheduleSave() {
-  if (!sessionToken) return;
+  if (!currentSession) return;
   if (saveTimeout) clearTimeout(saveTimeout);
   saveTimeout = setTimeout(() => saveToStorage(), 1500);
 }
@@ -316,7 +297,11 @@ function showSaveIndicator(status) {
 }
 
 // ─── Listen for Enter on auth inputs ─────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Initialize Supabase and restore session if available
+  await initSupabaseAndApp();
+
+  // Setup auth form keyboard shortcuts
   const loginPwd = document.getElementById('loginPassword');
   if (loginPwd) loginPwd.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
   const loginEmail = document.getElementById('loginEmail');
@@ -3137,26 +3122,19 @@ async function loadLLMConfig() {
     }
   }
   try {
-    const res = await fetch(LLM_PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'config' }),
-    });
-    if (res.ok) {
-      const cfg = await res.json();
-      if (cfg.has_env_key && !state.llmApiKey) {
-        state.llmEnabled = true;
-        state.llmConnected = true;
-        state.llmProvider = cfg.provider || 'openai';
-        state.llmUseProxy = true;
-        updateLLMStatus();
-        const toggle = document.getElementById('llmToggle');
-        if (toggle) { toggle.setAttribute('aria-checked', 'true'); toggle.classList.add('active'); }
-        const configPanel = document.getElementById('llmConfigPanel');
-        if (configPanel) configPanel.style.display = 'block';
-        const keyInput = document.getElementById('llmApiKey');
-        if (keyInput) keyInput.placeholder = '(clé configurée sur le serveur)';
-      }
+    const cfg = await getLLMConfig();  // From supabase-client.js (includes JWT)
+    if (cfg.has_env_key && !state.llmApiKey) {
+      state.llmEnabled = true;
+      state.llmConnected = true;
+      state.llmProvider = cfg.provider || 'openai';
+      state.llmUseProxy = true;
+      updateLLMStatus();
+      const toggle = document.getElementById('llmToggle');
+      if (toggle) { toggle.setAttribute('aria-checked', 'true'); toggle.classList.add('active'); }
+      const configPanel = document.getElementById('llmConfigPanel');
+      if (configPanel) configPanel.style.display = 'block';
+      const keyInput = document.getElementById('llmApiKey');
+      if (keyInput) keyInput.placeholder = '(clé configurée sur le serveur)';
     }
   } catch (e) { /* proxy not available, ignore */ }
 }
@@ -3170,13 +3148,8 @@ async function testLLMConnection() {
   testBtn.textContent = 'Test...';
   testBtn.disabled = true;
   try {
-    const proxyRes = await fetch(LLM_PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'test', provider, api_key: apiKey || '', custom_url: customUrl }),
-    });
-    const proxyData = await proxyRes.json();
-    if (proxyRes.ok && proxyData.ok) {
+    const proxyData = await testLLMProxy(provider, customUrl);  // From supabase-client.js (includes JWT)
+    if (proxyData && proxyData.ok) {
       state.llmEnabled = true;
       state.llmConnected = true;
       state.llmProvider = provider;
@@ -3195,7 +3168,7 @@ async function testLLMConnection() {
       return;
     }
   } catch (proxyErr) {
-    console.log('LLM proxy not available, trying direct:', proxyErr.message);
+    console.log('LLM proxy error:', proxyErr.message);
   }
   if (!apiKey) {
     showToast('Veuillez entrer une clé API (le proxy serveur n\'est pas disponible)', 'error');
@@ -3261,22 +3234,16 @@ async function classifyWithLLM() {
   try {
     let content;
     if (state.llmUseProxy) {
-      const proxyRes = await fetch(LLM_PROXY_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'proxy',
-          provider: state.llmProvider,
-          api_key: state.llmApiKey || '',
-          custom_url: state.llmCustomUrl || '',
-          system_prompt: systemPrompt,
-          messages: [{ role: 'user', content: userMessage }],
-          temperature: 0.1,
-          max_tokens: 2000,
-        }),
-      });
-      if (!proxyRes.ok) throw new Error('Erreur ' + proxyRes.status);
-      const proxyData = await proxyRes.json();
+      // Use Supabase-authenticated LLM call
+      const proxyData = await callLLM(
+        [{ role: 'user', content: userMessage }],
+        systemPrompt,
+        state.llmProvider,
+        state.llmCustomUrl || '',
+        0.1,
+        2000
+      );
+      if (!proxyData || !proxyData.content) throw new Error('Erreur LLM');
       content = proxyData.content;
     } else {
       const cfg = getLLMRequestConfig(userMessage, systemPrompt);

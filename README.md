@@ -1,6 +1,7 @@
-# Capacity & Stakeholder Tool — Déploiement Vercel
+# Capacity & Stakeholder Tool — Multi-User Edition
 
-Outil de gestion de capacité et de parties prenantes pour Product Designers. Frontend statique avec proxy LLM serverless.
+Outil de gestion de capacité et de parties prenantes pour Product Designers.
+Frontend statique avec **Supabase PostgreSQL** + authentification multi-device + proxy LLM sécurisé.
 
 ---
 
@@ -9,25 +10,38 @@ Outil de gestion de capacité et de parties prenantes pour Product Designers. Fr
 ```
 vercel-capacity-tool/
 ├── api/
-│   └── llm.py          # Fonction serverless Python — proxy LLM
+│   └── llm.py                    # Proxy LLM serverless (avec vérification JWT)
 ├── public/
-│   ├── index.html      # Application principale
-│   ├── app.js          # Logique client (IndexedDB)
-│   ├── style.css       # Styles
-│   └── ical.min.js     # Bibliothèque iCal
-├── vercel.json         # Configuration Vercel
-├── requirements.txt    # Dépendances Python (stdlib uniquement)
-└── README.md
+│   ├── index.html                # Application SPA
+│   ├── app.js                    # Logique client (4500+ lignes)
+│   ├── supabase-client.js        # Client Supabase + auth
+│   ├── env-config.js             # Configuration environnement
+│   ├── style.css                 # Styles + thèmes
+│   ├── ical.min.js               # Bibliothèque iCalendar
+│   └── themes/                   # Thèmes disponibles
+├── supabase/
+│   └── migrations/
+│       └── 001_init_schema.sql   # Schéma PostgreSQL + RLS
+├── scripts/
+│   └── build-env-config.js       # Script de build Vercel
+├── vercel.json                   # Configuration Vercel
+├── .env.example                  # Variables d'environnement (template)
+├── requirements.txt              # Dépendances Python (stdlib only)
+├── MIGRATION_GUIDE.md            # Guide complet de migration
+└── README.md                     # Ce fichier
 ```
 
-**Stockage des données :** IndexedDB côté client (aucune donnée transmise au serveur, sauf les appels LLM).
+**Stockage des données :** PostgreSQL Supabase avec Row Level Security (RLS) — chaque utilisateur ne voit que ses propres données.
 
-**Proxy LLM :** La fonction `api/llm.py` reçoit les requêtes du frontend, utilise la clé API stockée dans les variables d'environnement Vercel, puis interroge OpenAI / Anthropic / endpoint personnalisé. La clé API n'est jamais exposée dans le navigateur.
+**Authentification :** Supabase Auth (bcrypt, JWT, multi-device, gestion de session).
+
+**Proxy LLM :** La fonction `api/llm.py` vérifie le JWT Supabase, valide les entrées, puis interroge OpenAI/Anthropic/endpoint personnalisé. La clé API n'est jamais exposée au client.
 
 ---
 
 ## Prérequis
 
+- Compte [Supabase](https://supabase.com) (gratuit)
 - Compte [Vercel](https://vercel.com) (gratuit)
 - Compte [GitHub](https://github.com) (recommandé pour le déploiement continu)
 - Python 3.9+ (géré automatiquement par Vercel)
@@ -36,42 +50,73 @@ vercel-capacity-tool/
 
 ## Déploiement — étape par étape
 
-### 1. Préparer le dépôt GitHub
+### ⚠️ IMPORTANT : Migration de l'ancienne version
+
+Si vous aviez une version antérieure sans Supabase, consultez **`MIGRATION_GUIDE.md`** pour migrer vos données.
+
+### 1. Créer un projet Supabase
+
+1. Aller à [supabase.com](https://supabase.com)
+2. Créer un nouveau projet
+3. Région : choisir la plus proche
+4. Attendre que le projet soit prêt (~2-3 min)
+
+### 2. Initialiser la base de données
+
+1. Ouvrir le fichier `supabase/migrations/001_init_schema.sql`
+2. Copier son intégralité
+3. Aller à Supabase → SQL Editor → Create a new query
+4. Coller et exécuter ✓
+
+### 3. Copier les clés Supabase
+
+1. Aller à Supabase → Settings → API
+2. Copier :
+   - `Project URL` → `SUPABASE_URL`
+   - `anon public` → `SUPABASE_ANON_KEY`
+   - `service_role secret` → garder pour plus tard (serveur seulement)
+
+3. Aller à Supabase → Settings → JWT Settings
+   - Copier `JWT Secret` → `SUPABASE_JWT_SECRET`
+
+### 4. Préparer le dépôt GitHub
 
 ```bash
-# Initialiser un dépôt Git dans ce dossier
+# Initialiser ou mettre à jour le dépôt Git
 git init
 git add .
-git commit -m "Initial commit — Capacity Tool"
+git commit -m "feat: multi-user with Supabase auth + PostgreSQL"
 
 # Créer un dépôt sur GitHub puis pousser
 git remote add origin https://github.com/VOTRE_UTILISATEUR/capacity-tool.git
 git push -u origin main
 ```
 
-### 2. Importer le projet dans Vercel
+### 5. Déployer sur Vercel
 
-1. Connectez-vous sur [vercel.com](https://vercel.com)
-2. Cliquez sur **"Add New Project"**
-3. Sélectionnez votre dépôt GitHub `capacity-tool`
-4. Vercel détecte automatiquement la configuration via `vercel.json`
-5. Cliquez sur **"Deploy"**
+1. Aller à [vercel.com](https://vercel.com)
+2. Cliquer sur **"Add New Project"**
+3. Sélectionner votre dépôt GitHub `capacity-tool`
+4. ⚠️ **NE PAS déployer tout de suite** — configurer les variables d'abord
 
-> Le premier déploiement prend environ 1 à 2 minutes.
+### 6. Configurer les variables d'environnement Vercel
 
-### 3. Configurer les variables d'environnement (optionnel mais recommandé)
+Dans Vercel → votre projet → **Settings → Environment Variables**, ajouter :
 
-Dans Vercel → votre projet → **Settings → Environment Variables** :
+| Variable | Valeur | Notes |
+|---|---|---|
+| `SUPABASE_URL` | votre-URL-supabase | Depuis Supabase Settings → API |
+| `SUPABASE_ANON_KEY` | votre-clé-anon | Depuis Supabase Settings → API |
+| `SUPABASE_JWT_SECRET` | votre-jwt-secret | ⚠️ **SENSIBLE** — jamais en local |
+| `LLM_PROVIDER` | `openai` ou `anthropic` | (optionnel) |
+| `LLM_API_KEY` | `sk-...` | (optionnel) — clé API OpenAI/Anthropic |
+| `PRODUCTION_URL` | `https://votre-projet.vercel.app` | Pour CORS |
 
-| Variable          | Description                                        | Exemple                                      |
-|-------------------|----------------------------------------------------|----------------------------------------------|
-| `LLM_PROVIDER`    | Fournisseur LLM (`openai`, `anthropic`, `custom`)  | `openai`                                     |
-| `LLM_API_KEY`     | Clé API du fournisseur LLM                         | `sk-...`                                     |
-| `LLM_CUSTOM_URL`  | URL endpoint (uniquement si `LLM_PROVIDER=custom`) | `https://api.example.com/v1/chat/completions`|
+> **Laisser vides** `LLM_CUSTOM_URL` et `VERCEL_URL` (auto-générées).
 
-> **Sans variable d'environnement**, l'outil fonctionne toujours : l'utilisateur peut saisir sa clé API directement dans l'interface (stockée dans IndexedDB du navigateur). Avec les variables Vercel, aucune clé n'est jamais visible dans le navigateur.
+Après avoir ajouté les variables, cliquer sur **"Deploy"** pour déployer.
 
-Après avoir ajouté les variables, cliquez sur **"Redeploy"** pour les appliquer.
+> Le premier déploiement prend 2-3 minutes.
 
 ---
 
@@ -161,10 +206,29 @@ Réponse :
 
 ## Sécurité
 
-- Les données utilisateur (équipes, produits, entrées de capacité) restent **uniquement dans IndexedDB du navigateur** de l'utilisateur.
-- Seules les requêtes de classification LLM transitent par le serveur (le contenu des événements de calendrier).
-- Les clés API LLM configurées dans Vercel ne sont **jamais** transmises au client.
-- La clé API optionnellement saisie par l'utilisateur est stockée dans IndexedDB (chiffrée par le navigateur) et transmise chiffrée en HTTPS au proxy.
+### Authentification & Sessions
+- **Supabase Auth** : authentification bcrypt + sessions JWT sécurisées
+- **Multi-device** : l'utilisateur peut accéder depuis plusieurs appareils/navigateurs
+- **Pas de stockage de mot de passe** : géré par Supabase (bcrypt + 2FA optionnelle)
+
+### Données
+- **Row Level Security (RLS)** : chaque utilisateur ne peut lire que ses propres données
+- Données stockées dans **PostgreSQL Supabase** (chiffré en transit HTTPS, at rest)
+- **Pas de données dans les logs** : aucune exposition accidentelle
+
+### API LLM
+- **JWT obligatoire** : `/api/llm` rejette toute requête sans JWT Supabase valide
+- **CORS restreint** : uniquement vers l'URL de production Vercel
+- **Validation stricte** : messages, max_tokens, temperature, custom_url validés côté serveur
+- **Anti-SSRF** : custom_url doit être dans une whitelist de domaines
+- **Clé API serveur** : jamais transmise au client, stockée dans Vercel uniquement
+- **Timeout** : 25 secondes max pour les appels LLM
+
+### Headers de Sécurité
+- `X-Frame-Options: DENY` — protection contre clickjacking
+- `X-Content-Type-Options: nosniff` — prévention de sniffing MIME
+- `Content-Security-Policy` — contrôle strict des ressources
+- `Referrer-Policy: strict-origin-when-cross-origin` — confidentialité du référent
 
 ---
 

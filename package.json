@@ -1,0 +1,26 @@
+{
+  "name": "vercel-capacity-tool",
+  "version": "1.0.0",
+  "description": "Outil de gestion de capacité et de parties prenantes pour Product Designers. Frontend statique avec proxy LLM serverless.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node dev.js",
+    "build": "node scripts/build-env-config.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CardSD/vercel-capacity-tool.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/CardSD/vercel-capacity-tool/issues"
+  },
+  "homepage": "https://github.com/CardSD/vercel-capacity-tool#readme",
+  "dependencies": {
+    "vercel": "^50.25.2"
+  }
+}

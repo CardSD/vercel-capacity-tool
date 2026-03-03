@@ -1,14 +1,66 @@
 {
-  "buildCommand": "",
+  "buildCommand": "node scripts/build-env-config.js",
   "outputDirectory": "public",
   "functions": {
     "api/*.py": {
       "runtime": "@vercel/python@4.3.1",
-      "maxDuration": 30
+      "maxDuration": 30,
+      "memory": 512
     }
   },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "geolocation=(), microphone=(), camera=()"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://*.supabase.co https://api.openai.com https://api.anthropic.com; frame-ancestors 'none';"
+        }
+      ]
+    },
+    {
+      "source": "^/env-config\\.json$",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
+  ],
+  "env": [
+    "SUPABASE_URL",
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_JWT_SECRET",
+    "LLM_PROVIDER",
+    "LLM_API_KEY",
+    "LLM_CUSTOM_URL",
+    "PRODUCTION_URL",
+    "VERCEL_URL"
   ]
 }
+
