@@ -11,9 +11,10 @@ const outputDir = path.join(__dirname, '..', 'public');
 const outputFile = path.join(outputDir, 'env-config.json');
 
 // Variables to expose to the client (non-sensitive only)
+// .trim() prevents trailing newlines from env vars set via CLI
 const envConfig = {
-  SUPABASE_URL: process.env.SUPABASE_URL || '',
-  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
+  SUPABASE_URL: (process.env.SUPABASE_URL || '').trim(),
+  SUPABASE_ANON_KEY: (process.env.SUPABASE_ANON_KEY || '').trim(),
   // IMPORTANT: NEVER expose SUPABASE_JWT_SECRET or LLM_API_KEY to client
 };
 
