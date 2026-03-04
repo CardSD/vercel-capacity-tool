@@ -3,32 +3,41 @@
    Multi-user, multi-device synchronization
    ========================================= */
 
-let supabase = null;
+let supabaseClient = null;
 let currentSession = null;
 
 async function initSupabase() {
-  const { createClient } = window.supabase;
+  // Wait for env-config to finish loading
+  if (window._envReady) {
+    await window._envReady;
+  }
 
-  const SUPABASE_URL = window.ENV?.SUPABASE_URL || '';
-  const SUPABASE_ANON_KEY = window.ENV?.SUPABASE_ANON_KEY || '';
+  // Check Supabase library loaded
+  if (!window.supabase || !window.supabase.createClient) {
+    console.error('Supabase JS library not loaded');
+    return false;
+  }
+
+  const SUPABASE_URL = (window.ENV?.SUPABASE_URL || '').trim();
+  const SUPABASE_ANON_KEY = (window.ENV?.SUPABASE_ANON_KEY || '').trim();
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.error('Supabase not configured: missing SUPABASE_URL or SUPABASE_ANON_KEY');
     return false;
   }
 
-  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   return true;
 }
 
 // ─── Authentication (Supabase) ────────────────────────────────────────────
 
 async function supabaseLogin(email, password) {
-  if (!supabase) {
+  if (!supabaseClient) {
     throw new Error('Supabase not initialized');
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
     email: email.trim().toLowerCase(),
     password,
   });
@@ -42,11 +51,11 @@ async function supabaseLogin(email, password) {
 }
 
 async function supabaseRegister(email, password, displayName, role) {
-  if (!supabase) {
+  if (!supabaseClient) {
     throw new Error('Supabase not initialized');
   }
 
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await supabaseClient.auth.signUp({
     email: email.trim().toLowerCase(),
     password,
     options: {
@@ -69,9 +78,9 @@ async function supabaseRegister(email, password, displayName, role) {
 }
 
 async function supabaseLogout() {
-  if (!supabase) return false;
+  if (!supabaseClient) return false;
 
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabaseClient.auth.signOut();
   if (error) console.error('Logout error:', error);
 
   currentSession = null;
@@ -79,9 +88,9 @@ async function supabaseLogout() {
 }
 
 async function getCurrentSession() {
-  if (!supabase) return null;
+  if (!supabaseClient) return null;
 
-  const { data, error } = await supabase.auth.getSession();
+  const { data, error } = await supabaseClient.auth.getSession();
   if (!error && data.session) {
     currentSession = data.session;
     return data.session;
@@ -105,7 +114,7 @@ async function restoreSession() {
 // ─── App State Management (Supabase) ───────────────────────────────────────
 
 async function loadAppState() {
-  if (!supabase || !currentSession) {
+  if (!supabaseClient || !currentSession) {
     return null;
   }
 
@@ -128,7 +137,7 @@ async function loadAppState() {
 }
 
 async function createEmptyAppState() {
-  if (!supabase || !currentSession) {
+  if (!supabaseClient || !currentSession) {
     return null;
   }
 
@@ -160,7 +169,7 @@ async function createEmptyAppState() {
 }
 
 async function saveAppState(stateData) {
-  if (!supabase || !currentSession) {
+  if (!supabaseClient || !currentSession) {
     return false;
   }
 
@@ -193,7 +202,7 @@ async function saveAppState(stateData) {
 // ─── Week Entries (Capacity Data) ──────────────────────────────────────────
 
 async function loadWeekEntries(weekKey) {
-  if (!supabase || !currentSession) {
+  if (!supabaseClient || !currentSession) {
     return [];
   }
 
@@ -212,7 +221,7 @@ async function loadWeekEntries(weekKey) {
 }
 
 async function saveWeekEntries(weekKey, productId, categoryId, entries) {
-  if (!supabase || !currentSession) {
+  if (!supabaseClient || !currentSession) {
     return false;
   }
 
@@ -240,7 +249,7 @@ async function saveWeekEntries(weekKey, productId, categoryId, entries) {
 // ─── LLM with JWT Token ────────────────────────────────────────────────────
 
 async function callLLMProxy(payload) {
-  if (!supabase || !currentSession) {
+  if (!supabaseClient || !currentSession) {
     throw new Error('Not authenticated');
   }
 

@@ -1,14 +1,12 @@
 /* =========================================
    Environment Configuration
-   Loads from window.ENV or .env file
+   Loads from window.ENV or env-config.json
    ========================================= */
 
 window.ENV = window.ENV || {};
 
-// Load environment variables from Vercel or .env.local
-async function loadEnvConfig() {
-  // Si les variables ne sont pas déjà définies (injectées par Vercel),
-  // essayer de charger depuis /env-config.json (généré lors du build)
+// Promise that resolves when env is loaded — awaitable from other scripts
+window._envReady = (async function loadEnvConfig() {
   if (!window.ENV.SUPABASE_URL) {
     try {
       const envFile = await fetch('/env-config.json', { cache: 'no-store' });
@@ -17,19 +15,14 @@ async function loadEnvConfig() {
         window.ENV = { ...window.ENV, ...config };
       }
     } catch (err) {
-      console.warn('env-config.json not found, relying on Vercel environment variables');
+      console.warn('env-config.json not found');
     }
   }
 
-  // Vérifier que les variables essentielles sont présentes
   if (!window.ENV.SUPABASE_URL || !window.ENV.SUPABASE_ANON_KEY) {
     console.error('ERROR: Missing Supabase configuration');
     console.error('Required: SUPABASE_URL and SUPABASE_ANON_KEY');
     return false;
   }
-
   return true;
-}
-
-// Initialiser au chargement de la page
-loadEnvConfig().catch(console.error);
+})();
