@@ -118,7 +118,7 @@ async function loadAppState() {
     return null;
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('app_state')
     .select('*')
     .eq('user_id', currentSession.user.id)
@@ -154,7 +154,7 @@ async function createEmptyAppState() {
     llm_provider: 'openai',
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('app_state')
     .insert([emptyState])
     .select()
@@ -175,7 +175,7 @@ async function saveAppState(stateData) {
 
   const { products, categories, stakeholders, week_templates, keyword_rules, ics_auto_events, ics_manual_events, ics_ignored_events, llmProvider } = stateData;
 
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('app_state')
     .update({
       products,
@@ -206,7 +206,7 @@ async function loadWeekEntries(weekKey) {
     return [];
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('week_entries')
     .select('*')
     .eq('user_id', currentSession.user.id)
@@ -225,7 +225,7 @@ async function saveWeekEntries(weekKey, productId, categoryId, entries) {
     return false;
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('week_entries')
     .upsert({
       user_id: currentSession.user.id,

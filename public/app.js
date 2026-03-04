@@ -200,8 +200,8 @@ function enterApp() {
   bootApp();
   loadTeamMembers();
 
-  if (!dbAvailable) {
-    showToast('Stockage local indisponible — pensez à exporter régulièrement', 'warning');
+  if (!supabaseClient) {
+    showToast('Connexion au serveur indisponible — pensez à exporter régulièrement', 'warning');
   } else if (serverDataLoaded) {
     showToast('Données restaurées', 'success');
   }
@@ -3085,45 +3085,17 @@ function extractLLMResponse(data) {
   return data.choices?.[0]?.message?.content || '';
 }
 
-// ─── Save / Load LLM config in IndexedDB ──────────────────────────────────────
+// ─── Save / Load LLM config (Supabase) ──────────────────────────────────────
 async function saveLLMConfig() {
-  if (!sessionToken || !dbAvailable) return;
-  const config = {
-    llmProvider: state.llmProvider,
-    llmApiKey: state.llmApiKey,
-    llmCustomUrl: state.llmCustomUrl,
-    llmEnabled: state.llmEnabled,
-  };
-  await dbPut('users', sessionToken + '_llm', config);
+  // LLM config is now server-side env vars — nothing to save per-user
+  return;
 }
 
 async function loadLLMConfig() {
-  if (!sessionToken || !dbAvailable) return;
-  const config = await dbGet('users', sessionToken + '_llm');
-  if (config) {
-    state.llmProvider = config.llmProvider || 'openai';
-    state.llmApiKey = config.llmApiKey || '';
-    state.llmCustomUrl = config.llmCustomUrl || '';
-    state.llmEnabled = config.llmEnabled || false;
-    state.llmConnected = !!config.llmApiKey;
-    updateLLMStatus();
-    const providerSelect = document.getElementById('llmProvider');
-    if (providerSelect) providerSelect.value = state.llmProvider;
-    const keyInput = document.getElementById('llmApiKey');
-    if (keyInput && state.llmApiKey) {
-      keyInput.value = '';
-      keyInput.placeholder = '••••••••  (clé sauvegardée)';
-    }
-    if (state.llmEnabled) {
-      const toggle = document.getElementById('llmToggle');
-      if (toggle) { toggle.setAttribute('aria-checked', 'true'); toggle.classList.add('active'); }
-      const configPanel = document.getElementById('llmConfigPanel');
-      if (configPanel) configPanel.style.display = 'block';
-    }
-  }
+  if (!currentSession) return;
   try {
-    const cfg = await getLLMConfig();  // From supabase-client.js (includes JWT)
-    if (cfg.has_env_key && !state.llmApiKey) {
+    const cfg = await getLLMConfig();
+    if (cfg && cfg.has_env_key) {
       state.llmEnabled = true;
       state.llmConnected = true;
       state.llmProvider = cfg.provider || 'openai';
