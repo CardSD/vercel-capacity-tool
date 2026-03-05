@@ -42,23 +42,13 @@ async function initSupabaseAndApp() {
 // Load application state from Supabase
 async function loadAppStateFromSupabase() {
   try {
-    const dbState = await loadAppState();
-    if (dbState) {
-      // Map Supabase data to global state
-      state.products = dbState.products || [];
-      state.categories = dbState.categories || [];
-      state.stakeholders = dbState.stakeholders || [];
-      state.week_templates = dbState.week_templates || [];
-      state.keyword_rules = dbState.keyword_rules || [];
-      state.icsAutoEvents = dbState.ics_auto_events || [];
-      state.icsManualEvents = dbState.ics_manual_events || [];
-      state.icsIgnoredEvents = dbState.ics_ignored_events || [];
-      state.llmProvider = dbState.llm_provider || 'openai';
+    const fullState = await loadAppState();
+    if (fullState && Object.keys(fullState).length > 0) {
+      restoreState(fullState);
       serverDataLoaded = true;
       console.log('✓ App state loaded from Supabase');
     } else {
-      console.log('ℹ No existing app state, creating new one');
-      // State will be created on first save
+      console.log('ℹ No existing app state — will use defaults');
     }
   } catch (error) {
     console.error('Error loading app state:', error);
@@ -73,17 +63,7 @@ async function saveAppStateToSupabase() {
   }
 
   try {
-    const success = await saveAppState({
-      products: state.products,
-      categories: state.categories,
-      stakeholders: state.stakeholders,
-      week_templates: state.week_templates,
-      keyword_rules: state.keyword_rules,
-      ics_auto_events: state.icsAutoEvents,
-      ics_manual_events: state.icsManualEvents,
-      ics_ignored_events: state.icsIgnoredEvents,
-      llmProvider: state.llmProvider,
-    });
+    const success = await saveAppState(getSerializableState());
 
     if (success) {
       isSaving = false;
@@ -366,6 +346,13 @@ function getSerializableState() {
     activeTimer: state.activeTimer,
     teamMembers: state.teamMembers || [],
     theme: state.theme || 'current',
+    // ICS events
+    icsAutoEvents: state.icsAutoEvents || [],
+    icsManualEvents: state.icsManualEvents || [],
+    icsIgnoredEvents: state.icsIgnoredEvents || [],
+    // LLM
+    llmProvider: state.llmProvider || 'openai',
+    llmUseProxy: state.llmUseProxy || false,
   };
 }
 
@@ -413,6 +400,14 @@ function restoreState(data) {
   state.nextRuleId = Math.max(...state.keywordRules.map(r => r.id), 0) + 1;
   // Team members
   state.teamMembers = data.teamMembers || [];
+  // ICS events
+  if (data.icsAutoEvents) state.icsAutoEvents = data.icsAutoEvents;
+  if (data.icsManualEvents) state.icsManualEvents = data.icsManualEvents;
+  if (data.icsIgnoredEvents) state.icsIgnoredEvents = data.icsIgnoredEvents;
+  // LLM
+  if (data.llmProvider) state.llmProvider = data.llmProvider;
+  if (data.llmUseProxy !== undefined) state.llmUseProxy = data.llmUseProxy;
+  // Theme
   if (data.theme) { state.theme = data.theme; applyTheme(data.theme); }
 
   // Update UI inputs

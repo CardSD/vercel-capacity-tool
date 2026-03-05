@@ -112,6 +112,8 @@ async function restoreSession() {
 }
 
 // ─── App State Management (Supabase) ───────────────────────────────────────
+// Uses a single `full_state` JSONB column to persist the entire app state.
+// This mirrors the old IndexedDB approach: one blob = everything.
 
 async function loadAppState() {
   if (!supabaseClient || !currentSession) {
@@ -120,20 +122,21 @@ async function loadAppState() {
 
   const { data, error } = await supabaseClient
     .from('app_state')
-    .select('*')
+    .select('full_state')
     .eq('user_id', currentSession.user.id)
     .single();
 
   if (error) {
     if (error.code === 'PGRST116') {
-      // No row found — create empty state
+      // No row found — create empty row
       return await createEmptyAppState();
     }
     console.error('Load app state error:', error);
     return null;
   }
 
-  return data;
+  // Return the full_state blob (or null if empty)
+  return data?.full_state || null;
 }
 
 async function createEmptyAppState() {
@@ -141,23 +144,10 @@ async function createEmptyAppState() {
     return null;
   }
 
-  const emptyState = {
-    user_id: currentSession.user.id,
-    products: [],
-    categories: [],
-    stakeholders: [],
-    week_templates: [],
-    keyword_rules: [],
-    ics_auto_events: [],
-    ics_manual_events: [],
-    ics_ignored_events: [],
-    llm_provider: 'openai',
-  };
-
   const { data, error } = await supabaseClient
     .from('app_state')
-    .insert([emptyState])
-    .select()
+    .insert([{ user_id: currentSession.user.id, full_state: {} }])
+    .select('full_state')
     .single();
 
   if (error) {
@@ -165,81 +155,26 @@ async function createEmptyAppState() {
     return null;
   }
 
-  return data;
+  return data?.full_state || null;
 }
 
-async function saveAppState(stateData) {
+async function saveAppState(fullStateObj) {
   if (!supabaseClient || !currentSession) {
     return false;
   }
-
-  const { products, categories, stakeholders, week_templates, keyword_rules, ics_auto_events, ics_manual_events, ics_ignored_events, llmProvider } = stateData;
 
   const { error } = await supabaseClient
     .from('app_state')
-    .update({
-      products,
-      categories,
-      stakeholders,
-      week_templates,
-      keyword_rules,
-      ics_auto_events,
-      ics_manual_events,
-      ics_ignored_events,
-      llm_provider: llmProvider,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', currentSession.user.id);
-
-  if (error) {
-    console.error('Save app state error:', error);
-    return false;
-  }
-
-  return true;
-}
-
-// ─── Week Entries (Capacity Data) ──────────────────────────────────────────
-
-async function loadWeekEntries(weekKey) {
-  if (!supabaseClient || !currentSession) {
-    return [];
-  }
-
-  const { data, error } = await supabaseClient
-    .from('week_entries')
-    .select('*')
-    .eq('user_id', currentSession.user.id)
-    .eq('week_key', weekKey);
-
-  if (error) {
-    console.error('Load week entries error:', error);
-    return [];
-  }
-
-  return data || [];
-}
-
-async function saveWeekEntries(weekKey, productId, categoryId, entries) {
-  if (!supabaseClient || !currentSession) {
-    return false;
-  }
-
-  const { error } = await supabaseClient
-    .from('week_entries')
     .upsert({
       user_id: currentSession.user.id,
-      week_key: weekKey,
-      product_id: productId,
-      category_id: categoryId,
-      entries,
+      full_state: fullStateObj,
       updated_at: new Date().toISOString(),
     }, {
-      onConflict: 'user_id,week_key,product_id,category_id'
+      onConflict: 'user_id',
     });
 
   if (error) {
-    console.error('Save week entries error:', error);
+    console.error('Save app state error:', error);
     return false;
   }
 
